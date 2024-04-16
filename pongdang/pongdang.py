@@ -369,7 +369,7 @@ def end_page(winner):
         # gameDisplay.blit(background_start, (0, 0))
         # gameDisplay.blit(title_start,(36,240))
         
-        Button(btn_end, button_x, button_y, 350, 147, btn_end_click, button_x, button_y, main)
+        Button(btn_end, button_x, button_y, 350, 147, btn_end_click, button_x, button_y, start_page)
         
         pygame.display.update()
     pygame.quit()
