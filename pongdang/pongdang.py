@@ -212,19 +212,6 @@ def check_game_over():
         return -1  # Draw
     return None  # Game is not over
 
-def display_winner(winner):
-    """ Display the winning player or a draw """
-    if winner == 0:
-        text = "Player 1 wins!"
-    elif winner == 1:
-        text = "Player 2 wins!"
-    elif winner == -1:
-        text = "It's a draw!"
-    text_surface = font.render(text, True, (255, 255, 255))
-    gameDisplay.blit(text_surface, (display_width // 2 - text_surface.get_width() // 2, display_height // 2 - text_surface.get_height() // 2))
-    pygame.display.flip()
-    pygame.time.wait(5000)
-
 def all_caps_stopped():
     """ Check if all caps have stopped moving """
     for player_caps in caps:
@@ -273,13 +260,13 @@ def main():
     winner = None
     dragging_start_pos = None  # Track the start position of a drag
     running = True
+    next_change_time = pygame.time.get_ticks()
     while running:
         # 배경 이미지 변경
         
         if pygame.time.get_ticks() >= next_change_time:
-            current_background_index = (current_background_index + 1) % len(background_play)
             next_change_time += 300  # 3초 추가
-            
+            current_background_index = (current_background_index + 1) % len(background_play)
         
         gameDisplay.blit(background_play[current_background_index], (0, 0))
         gameDisplay.blit(background_land_play, (10,175))
@@ -336,10 +323,10 @@ def start_page():
         # 마우스 위치 확인
         # mouse_pos = pygame.mouse.get_pos()
         # mouse_x, mouse_y = mouse_pos
-        if pygame.time.get_ticks() >= next_change_time:
-            current_background_index = (current_background_index + 1) % len(background_start)
-            next_change_time += 80  # 3초 추가
-            
+        # if pygame.time.get_ticks() >= next_change_time:
+        current_background_index = (current_background_index + 1) % len(background_start)
+            # next_change_time += 80  # 3초 추가
+        time.sleep(0.1)
         gameDisplay.blit(background_start[current_background_index], (0, 0))
         # gameDisplay.blit(background_start, (0, 0))
         gameDisplay.blit(title_start,(36,240))
