@@ -6,16 +6,16 @@ import sys
 pygame.init()
 
 # 아이콘 이미지
-new_icon = pygame.image.load("image/ball1.png")
+new_icon = pygame.image.load("image/ball4.png")
 new_icon=pygame.transform.scale(new_icon, (30, 30))
 pygame.display.set_icon(new_icon)
 
 # BGM 넣기
-music=pygame.mixer.music.load('bgm/start_bgm_1.mp3')
 
-fallSound=pygame.mixer.Sound('bgm/effect_fall.wav')
-effect_ending=pygame.mixer.Sound('bgm/effect_ending.wav')
-pygame.mixer.music.play()
+fallSound=pygame.mixer.Sound('music/effect_fall.wav')
+hitSound=pygame.mixer.Sound('music/hit.wav')
+hitSound2=pygame.mixer.Sound('music/hit2.wav')
+effect_ending=pygame.mixer.Sound('music/effect_ending.wav')
 
 # 스타트 페이지 이미지
 background_start = [pygame.image.load(f"./image/main_background/{i}.png") for i in range(92)] # 스타트 배경
@@ -28,11 +28,21 @@ btn_start_click = pygame.image.load("./image/start_btn2.png") # 클릭시 스타
 btn_start_click = pygame.transform.scale(btn_start_click, (350, 147))
 
 # 플레이 페이지 이미지
-background_play = [pygame.image.load(f"./image/background_{i}.png") for i in range(4)]
+background_play = [pygame.image.load(f"./image/background/background_{i}.png") for i in range(4)]
 
-background_land_play = pygame.image.load("./image/land.jpg") # 플레이 배경
 background_play = [pygame.transform.scale(image, (650, 977)) for image in background_play]
+background_land_play = pygame.image.load("./image/land.jpg") # 플레이 배경
 background_land_play = pygame.transform.scale(background_land_play, (630, 630))
+
+play_background_top=[pygame.image.load(f"./image/play_background_top/{i}.png") for i in range(12)]
+play_background_top = [pygame.transform.scale(image, (650, 224)) for image in play_background_top]
+play_background_bt=[pygame.image.load(f"./image/play_background_bt/{i}.png") for i in range(12)]
+play_background_bt = [pygame.transform.scale(image, (650, 224)) for image in play_background_bt]
+
+sand_background=[pygame.image.load(f"./image/sand_crop/{i}.png") for i in range(10)]
+
+moving_in=[pygame.image.load(f"./image/moving_in{i}.png") for i in range(1,4)]
+moving_in = [pygame.transform.scale(image, (350, 147)) for image in moving_in]
 
 # 앤드 페이지 이미지
 background_end=pygame.image.load('image/ending_background.jpg')
@@ -81,8 +91,8 @@ CAP_RADIUS = 25
 MAX_CAPS = 5  # Each player has 5 caps
 font = pygame.font.Font(None, 36)
 player_images = [
-    load_scaled_image('image/ball2.png', (50, 50)),  # 플레이어 1 이미지
-    load_scaled_image('image/ball3.png', (50, 50))   # 플레이어 2 이미지
+    load_scaled_image('image/ball7.png', (50, 50)),  # 플레이어 1 이미지
+    load_scaled_image('image/ball8.png', (50, 50))   # 플레이어 2 이미지
 ]
 current_player = 0
 total_players = 2
@@ -183,6 +193,7 @@ def handle_collisions():
                 cap1['velocity'][1] += v2n * ny - v1n * ny
                 cap2['velocity'][0] += v1n * nx - v2n * nx
                 cap2['velocity'][1] += v1n * ny - v2n * ny
+                hitSound2.play()
 
 def draw_caps():
     """ Draw all caps using images """
@@ -196,11 +207,11 @@ def remove_out_of_bounds_caps():
     """ Remove caps that have gone out of the playing field """
     global caps
     for i in range(total_players):
-        # temp=caps
+        temp=caps[i]
         caps[i] = [cap for cap in caps[i] if FIELD_X <= cap['position'][0] <= FIELD_X + FIELD_WIDTH and
                    FIELD_Y <= cap['position'][1] <= FIELD_Y + FIELD_HEIGHT]
-        # if temp!=caps:
-        #     fallSound.play()
+        if temp!=caps[i]:
+            fallSound.play()
 
 def check_game_over():
     """ Check if the game is over and return the result """
@@ -253,7 +264,7 @@ def main():
     global next_change_time,current_background_index,current_player, movement_started, start_time, dragging_start_pos
     pygame.mixer.music.stop()
     
-    pygame.mixer.music.load('bgm/main_bgm_1.mp3')
+    pygame.mixer.music.load('music/main_bgm_1.mp3')
     pygame.mixer.music.play()
     initialize_caps()
     running = True
@@ -266,10 +277,12 @@ def main():
         
         if pygame.time.get_ticks() >= next_change_time:
             next_change_time += 300  # 3초 추가
-            current_background_index = (current_background_index + 1) % len(background_play)
+            current_background_index = (current_background_index + 1) % len(sand_background)
         
-        gameDisplay.blit(background_play[current_background_index], (0, 0))
-        gameDisplay.blit(background_land_play, (10,175))
+        # gameDisplay.blit(play_background_top[current_background_index], (0, 0))
+        # gameDisplay.blit(play_background_bt[current_background_index], (0, 753))
+        gameDisplay.blit(sand_background[current_background_index], (0, 0))
+        # gameDisplay.blit(background_land_play, (10,175))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -280,8 +293,8 @@ def main():
             if time.time() - start_time >= 3:
                 update_positions()
                 draw_caps()
+                remove_out_of_bounds_caps()
                 if all_caps_stopped():
-                    remove_out_of_bounds_caps()
                     winner = check_game_over()
                     if winner is not None:
                         end_page(winner)
@@ -290,9 +303,9 @@ def main():
                         reset_for_next_turn()  # Prepare for the next turn
             else:
                 # Draw a countdown timer on the gameDisplay
-                countdown_timer = max(0, int(3 - (time.time() - start_time)))
+                countdown_timer = max(0, int(2 - (time.time() - start_time)))
                 timer_surface = font.render(f"Moving in {countdown_timer}...", True, (255, 255, 255))
-                gameDisplay.blit(timer_surface, (display_width // 2 - timer_surface.get_width() // 2, display_height // 2 - timer_surface.get_height() // 2))
+                gameDisplay.blit(moving_in[countdown_timer], (display_width // 2 - 350 // 2, display_height // 2 - 147 // 2))
         else:
             draw_caps()  # Draw caps only when not in movement
 
@@ -312,6 +325,10 @@ def main():
 # 이벤트 루프
 def start_page():
     global next_change_time,current_background_index
+    pygame.mixer.music.stop()
+    pygame.mixer.music.load('music/start_bgm_1.mp3')
+    pygame.mixer.music.play()
+
     running = True
     while running:
         for event in pygame.event.get():
