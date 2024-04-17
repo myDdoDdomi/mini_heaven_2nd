@@ -100,8 +100,8 @@ def intro():
             # main_bgm.play()
             pass
         # 버튼만들기 Button(img, x, y , he, w , act_img,  act_x, act_y, func)
-        Button(explain_back, 400, 550, 150, 80, explain_back_click, 400, 550, explain)
-        Button(mainmenu_start, 700, 550, 150, 80, mainmenu_start_click, 700, 550, ready)
+        Button(explain_back, 320, 550, 300, 50, explain_back_click, 320, 550, explain)
+        Button(mainmenu_start, 680, 550, 250, 50, mainmenu_start_click, 680, 550, ready)
         pygame.display.update()
         clock.tick(7)
 
@@ -115,15 +115,15 @@ def ready():
 
     trigger = False
     while not trigger:
-        gameDisplay.fill(WHITE) 
+        gameDisplay.blit(bg_ready, (0, 0))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
-        Button(explain_back, 400, 550, 150, 80, explain_back_click, 400, 550, select1)
-        Button(mainmenu_start, 700, 550, 150, 80, mainmenu_start_click, 700, 550, select2)
+        Button(p1_button, 350, 550, 250, 50, p1_button_click, 350, 550, select1)
+        Button(p2_button, 630, 550, 250, 50, p2_button_click, 630, 550, select2)
         if player1 and player2:
             trigger = True
 
@@ -229,7 +229,7 @@ def game(player1, player2):
         rotated_image2 = pygame.transform.rotate(cannon_body2, player2.angle - 180)
         new_rect2 = rotated_image2.get_rect(center=cannon_body2.get_rect(center=player2.body).center)
 
-        gameDisplay.fill(WHITE)  # 배경 이미지
+        gameDisplay.blit(summer_bg, (0, 0))  # 배경 이미지
 
         gameDisplay.blit(rotated_image1, new_rect1)  # 회전한 대포
         gameDisplay.blit(cannon_wheel,player1.position)  # 바퀴 이미지
@@ -305,14 +305,22 @@ mainmenu_start = pygame.image.load("./img/start.png")
 mainmenu_start_click = pygame.image.load("./img/start_click.png")
 explain_back = pygame.image.load("./img/explain.png")
 explain_back_click = pygame.image.load("./img/explain_click.png")
+p1_button = pygame.image.load("./img/player1.png")
+p1_button_click = pygame.image.load("./img/player1_click.png")
+p2_button = pygame.image.load("./img/player2.png")
+p2_button_click = pygame.image.load("./img/player2_click.png")
 back = pygame.image.load("./img/back.png")
 back_click = pygame.image.load("./img/back_click.png")
 font = pygame.font.Font(None,80)
 font_1 = pygame.font.Font(None,100)
 
+# 계절 이미지 변수
+summer_bg = pygame.image.load("./img/summer_bg.png")
+
 cannon_body1 = pygame.image.load("./img/cannon-3.png")
 cannon_body2 = pygame.image.load("./img/cannon-4.png")
 cannon_wheel = pygame.image.load("./img/cannon-1.png") # 24
+bomb = pygame.image.load("./img/heart_bomb.png") 
 # wheel = [100,300]
 body = [124, 324]
 
@@ -334,6 +342,7 @@ clock = pygame.time.Clock() #Clock 오브젝트 초기화
 
 bg_explain = pygame.image.load("./img/explain_bg.png")
 bg = pygame.image.load("./img/neko_bg.png")
+bg_ready = pygame.image.load("./img/ready_bg.png")
 cursor =pygame.image.load("./img/neko_cursor.png")
 
 if __name__ == "__main__":
