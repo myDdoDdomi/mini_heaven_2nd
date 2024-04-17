@@ -302,9 +302,9 @@ def main():
                     else:
                         reset_for_next_turn()  # Prepare for the next turn
             else:
+                draw_caps()
                 # Draw a countdown timer on the gameDisplay
                 countdown_timer = max(0, int(2 - (time.time() - start_time)))
-                timer_surface = font.render(f"Moving in {countdown_timer}...", True, (255, 255, 255))
                 gameDisplay.blit(moving_in[countdown_timer], (display_width // 2 - 350 // 2, display_height // 2 - 147 // 2))
         else:
             draw_caps()  # Draw caps only when not in movement
