@@ -13,7 +13,7 @@ class Player:
     def __init__(self, initial_position, side):
         self.position = initial_position
         self.damage = 1
-        self.volume = 10
+        self.volume = 20
         self.side = side
         self.hp = 10
         self.gauge = 0
@@ -28,8 +28,8 @@ class Player:
         self.position[1] += dy
         self.body[0] += dx
         self.body[1] += dy
-    def hit(self):
-        self.hp -= (self.damage * damage_scale)
+    def hit(self, damage, scale):
+        self.hp -= (damage * scale)
     
     def angle_move(self, theta):
         if self.side == 1:
@@ -115,7 +115,7 @@ def ready():
 
     trigger = False
     while not trigger:
-        gameDisplay.blit(bg_ready, (0, 0))
+        gameDisplay.blit(bg_ready, (0, 0)) 
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -131,7 +131,12 @@ def ready():
             game(player1, player2)
         pygame.display.update()
         clock.tick(7)
-        print('-')
+        if not player1 and not player2:
+            print('----------------------------------------------')
+        elif player1:
+            print('player1 is ready')
+        elif player2:
+            print('player2 is ready')
     
 
 def select1():
@@ -182,7 +187,7 @@ def game(player1, player2):
     clock = pygame.time.Clock()
     menu = True
     while menu:
-        print(turn)
+        print(player1.hp, player2.hp)
         if turn % 2 == 1:
             player = player1
         else:
@@ -222,7 +227,10 @@ def game(player1, player2):
             txt_angle = font.render(str(player.angle), True, BLACK)
         elif player.side == 2:
             txt_angle = font.render(str(180 - player.angle), True, BLACK)
-
+            
+        txt_hp_1 = font.render(str(player1.hp), True, BLACK)
+        txt_hp_2 = font.render(str(player2.hp), True, BLACK)
+        
         rotated_image1 = pygame.transform.rotate(cannon_body1, player1.angle)
         new_rect1 = rotated_image1.get_rect(center=cannon_body1.get_rect(center=player1.body).center)
 
@@ -240,6 +248,8 @@ def game(player1, player2):
         pygame.draw.rect(gameDisplay, RED, [player.body[0]-35, player.body[1]-150, player.gauge, 10])
         gameDisplay.blit(txt,(0,0))
         gameDisplay.blit(txt_angle, (150, 0))
+        gameDisplay.blit(txt_hp_1, (player1.body[0], player1.body[1]-250))
+        gameDisplay.blit(txt_hp_2, (player2.body[0], player2.body[1]-250))
         pygame.display.update()
         clock.tick(20)
 
@@ -253,8 +263,10 @@ def shot(player):
     init_pos = player.position
     v_w, theta_w, k, scale = environ(turn)
     x_coord, y_coord = coord(v_s, theta_s, v_w, theta_w, k, init_pos[0], init_pos[1])
-    print(f'x_coord : {len(x_coord)}')
-    print(f'y_coord : {len(y_coord)}')
+    # print(f'x_coord : {len(x_coord)}')
+    # print(f'y_coord : {len(y_coord)}')
+    txt_hp_1 = font.render(str(player1.hp), True, BLACK)
+    txt_hp_2 = font.render(str(player2.hp), True, BLACK)
 
     gameDisplay = pygame.display.set_mode((display_width, display_height))
     clock = pygame.time.Clock()
@@ -290,11 +302,29 @@ def shot(player):
         pygame.draw.rect(gameDisplay, RED, [player.body[0]-35, player.body[1]-150, player.gauge, 10])
         gameDisplay.blit(txt,(0,0))
         gameDisplay.blit(txt_angle, (150, 0))
+        gameDisplay.blit(txt_hp_1, (player1.body[0], player1.body[1]-250))
+        gameDisplay.blit(txt_hp_2, (player2.body[0], player2.body[1]-250))
         pygame.display.update()
         idx += 1
         clock.tick(120)
-
+    impact = (x_coord[idx-1], y_coord[idx-1])
+    
+    calculate(player, impact, scale)
     turn += 1
+
+def calculate(player, impact, scale):
+    global player1
+    global player2
+    
+    if player.side == 1:
+        enemy = player2
+    elif player.side == 2:
+        enemy = player1
+    
+    if impact[0] - enemy.volume <= enemy.position[0] <= impact[0] + enemy.volume:
+        enemy.hit(player.damage, scale)
+    
+    
 
 # 변수 영역 //////////////////////////////////////////////////
 
@@ -320,7 +350,7 @@ summer_bg = pygame.image.load("./img/summer_bg.png")
 cannon_body1 = pygame.image.load("./img/cannon-3.png")
 cannon_body2 = pygame.image.load("./img/cannon-4.png")
 cannon_wheel = pygame.image.load("./img/cannon-1.png") # 24
-bomb = pygame.image.load("./img/heart_bomb.png") 
+bomb = pygame.image.load("./img/heart_bomb.png")
 # wheel = [100,300]
 body = [124, 324]
 
@@ -344,6 +374,8 @@ bg_explain = pygame.image.load("./img/explain_bg.png")
 bg = pygame.image.load("./img/neko_bg.png")
 bg_ready = pygame.image.load("./img/ready_bg.png")
 cursor =pygame.image.load("./img/neko_cursor.png")
+
+# 실행 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 if __name__ == "__main__":
     intro()
