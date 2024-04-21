@@ -39,7 +39,7 @@ play_background_top = [pygame.transform.scale(image, (650, 224)) for image in pl
 play_background_bt=[pygame.image.load(f"./image/play_background_bt/{i}.png") for i in range(12)]
 play_background_bt = [pygame.transform.scale(image, (650, 224)) for image in play_background_bt]
 
-sand_background=[pygame.image.load(f"./image/sand_crop/{i}.png") for i in range(10)]
+sand_background=[pygame.image.load(f"./image/sandcrop/{i}.png") for i in range(10)]
 
 moving_in=[pygame.image.load(f"./image/moving_in{i}.png") for i in range(1,4)]
 moving_in = [pygame.transform.scale(image, (350, 147)) for image in moving_in]
