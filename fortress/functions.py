@@ -3,7 +3,7 @@ import math
 from classes import Player
 import pygame
 
-def coord(v_s, theta_s, v_w, theta_w, k, init_x, init_y):
+def coord(player, v_w, theta_w, k):
     '''
     v_s : 발사 속도 (파워)
     theta_s : 발사 각도
@@ -11,11 +11,32 @@ def coord(v_s, theta_s, v_w, theta_w, k, init_x, init_y):
     theta_w : 풍향
     k : 저항값
     '''
-    g = 9.8
+    g = 8
+    v_s = player.gauge
+    theta_s = player.angle
+    
     a_s = math.radians(theta_s)
     a_w = math.radians(theta_w)
+    r_sq = math.sqrt(74**2 + 28**2)
     
-    t_end = round(2 * (v_s * math.sin(a_s) - v_w * math.sin(a_w)) / g, 2)
+    cannon_cos = math.cos(round(74 / r_sq, 3))
+    cannon_sin = math.sin(round(28 / r_sq, 3))
+    
+    shot_cos = cannon_cos * math.cos(a_s) - cannon_sin * math.sin(a_s)
+    if player.side == 1:
+        shot_sin = cannon_sin * math.cos(a_s) + cannon_cos * math.sin(a_s)
+    elif player.side == 2:
+        shot_sin = math.sin(a_s) * cannon_cos - cannon_sin * math.cos(a_s)
+    
+    print(f'변화량 : {round(r_sq * shot_cos, 2), round(r_sq * shot_sin, 2)}')
+    print(f'삼각함수 : {round(shot_cos, 2), round(shot_sin, 2)}')
+    print(f'각도 : {theta_s}')
+    
+    init_x = player.position[0] + round(r_sq * shot_cos, 2)
+    init_y = player.position[1] - round(r_sq * shot_sin, 2)
+    
+    
+    t_end = round(2 * (v_s * math.sin(a_s) - v_w * math.sin(a_w) ) / g, 2)
     
     x = []
     y = []
@@ -35,14 +56,7 @@ def environ(turn):
     '''
     턴 수에 따라 계절 산출, 계절에 따른 풍속, 풍향, 저항, 데미지 배율 설정
     '''
-    if 1 <= turn < 4:
-        season = 'spring'
-    elif 4 <= turn < 7:
-        season = 'summer'
-    elif 7 < turn < 10:
-        season = 'autumn'
-    else:
-        season = 'winter'
+    season = seasonal(turn)
     
     if season == 'spring':
         wind_velocity = list(range(10))
@@ -75,3 +89,14 @@ def calculation(impact, player):
     # player = Player(wheel, side)
     if impact-player.volume <= player.position[0] <= impact+player.volume:
         player.hit()
+        
+def seasonal(turn):
+    if 1 <= turn < 4:
+        season = 'spring'
+    elif 4 <= turn < 7:
+        season = 'summer'
+    elif 7 <= turn < 10:
+        season = 'autumn'
+    else:
+        season = 'winter'
+    return season
