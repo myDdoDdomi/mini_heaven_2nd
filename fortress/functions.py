@@ -19,8 +19,8 @@ def coord(player, v_w, theta_w, k):
     a_w = math.radians(theta_w)
     r_sq = math.sqrt(74**2 + 28**2)
     
-    cannon_cos = math.cos(round(74 / r_sq, 3))
-    cannon_sin = math.sin(round(28 / r_sq, 3))
+    cannon_cos = math.cos(round(59 / r_sq, 3))
+    cannon_sin = math.sin(round(22.4 / r_sq, 3))
     
     shot_cos = cannon_cos * math.cos(a_s) - cannon_sin * math.sin(a_s)
     if player.side == 1:

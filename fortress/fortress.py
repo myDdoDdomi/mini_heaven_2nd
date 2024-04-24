@@ -281,7 +281,6 @@ def game_over(win, defeated):
 # 게임 실행 함수
 def game(player1, player2):
     global turn, environment
-    pygame.init()
     print(player1.position, player2.position)
     
     # 시작하고 초기 환경 설정
@@ -365,10 +364,10 @@ def game(player1, player2):
         gameDisplay.blit(character2, (player2.position[0]-20, player2.position[1]-80))
 
         gameDisplay.blit(rotated_image1, new_rect1)  # 회전한 대포
-        gameDisplay.blit(cannon_wheel,player1.position)  # 바퀴 이미지
+        gameDisplay.blit(cannon_wheel,(player1.position[0], player1.position[1]+10))  # 바퀴 이미지
 
         gameDisplay.blit(rotated_image2, new_rect2)  # 회전한 대포
-        gameDisplay.blit(cannon_wheel,player2.position)  # 바퀴 이미지
+        gameDisplay.blit(cannon_wheel,(player2.position[0], player2.position[1]+10))  # 바퀴 이미지
 
         pygame.draw.rect(gameDisplay, RED, [player.body[0]-35, player.body[1]-120, player.gauge, 10])
         gameDisplay.blit(txt,(0,0))
@@ -449,8 +448,6 @@ def shot(player):
     txt_velocity = font.render(f'{environment.v_w}m/s', True, BLACK)
     velocity_rect = txt_velocity.get_rect(center = (640, 180))
     
-    gameDisplay = pygame.display.set_mode((display_width, display_height))
-    clock = pygame.time.Clock()
     print(f'position : {player.position}')
     print(f'{x_coord[0], y_coord[0]}')
     
@@ -496,9 +493,9 @@ def shot(player):
         gameDisplay.blit(character2, (player2.position[0]-20, player2.position[1]-80))
         
         gameDisplay.blit(rotated_image1, new_rect1)  # 회전한 대포1
-        gameDisplay.blit(cannon_wheel,player1.position)  # 바퀴 이미지
+        gameDisplay.blit(cannon_wheel,(player1.position[0], player1.position[1]+10))  # 바퀴 이미지
         gameDisplay.blit(rotated_image2, new_rect2)  # 회전한 대포2
-        gameDisplay.blit(cannon_wheel,player2.position)  # 바퀴 이미지
+        gameDisplay.blit(cannon_wheel,(player2.position[0], player2.position[1]+10))  # 바퀴 이미지
         
         gameDisplay.blit(txt_angle_1, (player1.body[0]-10, player1.body[1]-180))
         gameDisplay.blit(txt_angle_2, (player2.body[0]-10, player2.body[1]-180))
@@ -621,9 +618,9 @@ character2 = pygame.transform.scale(pygame.image.load("./img/character1.png"), (
 # 계절 이미지 변수
 summer_bg = pygame.image.load("./img/summer_bg.png")
 
-cannon_body1 = pygame.transform.scale(pygame.image.load("./img/cannon-3.png"), (118, 150))
-cannon_body2 = pygame.transform.scale(pygame.image.load("./img/cannon-4.png"), (118, 150))
-cannon_wheel = pygame.image.load("./img/cannon-1.png") # 24
+cannon_body1 = pygame.transform.scale(pygame.image.load("./img/cannon-3.png"), (94, 120))
+cannon_body2 = pygame.transform.scale(pygame.image.load("./img/cannon-4.png"), (94, 120))
+cannon_wheel = pygame.transform.scale(pygame.image.load("./img/cannon-1.png"), (39,39)) # 24
 bomb = pygame.image.load("./img/heart_bomb.png")
 # wheel = [100,300]
 body = [124, 324]
