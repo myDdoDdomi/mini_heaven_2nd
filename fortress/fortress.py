@@ -370,10 +370,10 @@ def game(player1, player2):
         gameDisplay.blit(cannon_wheel,(player2.position[0], player2.position[1]+10))  # 바퀴 이미지
 
         pygame.draw.rect(gameDisplay, RED, [player.body[0]-35, player.body[1]-120, player.gauge, 10])
-        gameDisplay.blit(txt,(0,0))
-        # gameDisplay.blit(txt_angle, (150, 0))
-        gameDisplay.blit(txt_angle_1, (player1.body[0]-10, player1.body[1]-180))
-        gameDisplay.blit(txt_angle_2, (player2.body[0]-10, player2.body[1]-180))
+        # gameDisplay.blit(txt,(0,0))
+        # # gameDisplay.blit(txt_angle, (150, 0))
+        # gameDisplay.blit(txt_angle_1, (player1.body[0]-10, player1.body[1]-180))
+        # gameDisplay.blit(txt_angle_2, (player2.body[0]-10, player2.body[1]-180))
         gameDisplay.blit(txt_velocity, velocity_rect)
         
         # 풍향 표시
@@ -494,11 +494,9 @@ def shot(player):
         gameDisplay.blit(rotated_image2, new_rect2)  # 회전한 대포2
         gameDisplay.blit(cannon_wheel,(player2.position[0], player2.position[1]+10))  # 바퀴 이미지
         
-        gameDisplay.blit(txt_angle_1, (player1.body[0]-10, player1.body[1]-180))
-        gameDisplay.blit(txt_angle_2, (player2.body[0]-10, player2.body[1]-180))
-        
+
         pygame.draw.rect(gameDisplay, RED, [player.body[0]-35, player.body[1]-120, player.gauge, 10])
-        gameDisplay.blit(txt,(0,0))
+        # gameDisplay.blit(txt,(0,0))
         
         # 캐릭터 이미지 출력
         
