@@ -447,10 +447,7 @@ def shot(player):
     txt_angle_2 = font.render(str(180 - player2.angle), True, BLACK)
     txt_velocity = font.render(f'{environment.v_w}m/s', True, BLACK)
     velocity_rect = txt_velocity.get_rect(center = (640, 180))
-    
-    print(f'position : {player.position}')
-    print(f'{x_coord[0], y_coord[0]}')
-    
+
     # 배경이미지
     season = seasonal(turn)
     if season == 'spring':
@@ -559,6 +556,10 @@ def shot(player):
     
     # 마지막 x 좌표와 y 좌표가 impact
     impact = (x_coord[idx-1], y_coord[idx-1])
+    print(f'position : {player.position}')
+    print(f'start : {(x_coord[0], y_coord[0])}')
+    print(f'impact : {impact}')
+
     
     # 현재 플레이어와 impact, 계절의 데미지 스케일로 피격 판정
     calculate(player, impact, scale)

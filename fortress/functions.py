@@ -17,10 +17,10 @@ def coord(player, v_w, theta_w, k):
     
     a_s = math.radians(theta_s)
     a_w = math.radians(theta_w)
-    r_sq = math.sqrt(74**2 + 28**2)
+    r_sq = math.sqrt(40**2 + 16**2)
     
-    cannon_cos = math.cos(round(59 / r_sq, 3))
-    cannon_sin = math.sin(round(22.4 / r_sq, 3))
+    cannon_cos = math.cos(round(40 / r_sq, 3))
+    cannon_sin = math.sin(round(16 / r_sq, 3))
     
     shot_cos = cannon_cos * math.cos(a_s) - cannon_sin * math.sin(a_s)
     if player.side == 1:
@@ -31,12 +31,15 @@ def coord(player, v_w, theta_w, k):
     print(f'변화량 : {round(r_sq * shot_cos, 2), round(r_sq * shot_sin, 2)}')
     print(f'삼각함수 : {round(shot_cos, 2), round(shot_sin, 2)}')
     print(f'각도 : {theta_s}')
+
+    
     
     init_x = player.position[0] + round(r_sq * shot_cos, 2)
     init_y = player.position[1] - round(r_sq * shot_sin, 2)
+    h = r_sq * shot_sin
     
-    
-    t_end = round(2 * (v_s * math.sin(a_s) - v_w * math.sin(a_w) ) / g, 2)
+    t_end = round(((v_s * math.sin(a_s) - v_w * math.sin(a_w)) + math.sqrt((v_s * math.sin(a_s) - v_w * math.sin(a_w))**2 + 2*g*h)) / g, 2)   # 여기 왜 빠졌지?
+
     
     x = []
     y = []
