@@ -14,8 +14,8 @@ class Player:
     def __init__(self, initial_position, side):
         self.position = initial_position
         self.name = 'player' + str(side)
-        self.damage = 10
-        self.volume = 200  #74
+        self.damage = 100
+        self.volume = 70  #74
         self.side = side
         self.hp = 100
         self.gauge = 0
@@ -63,11 +63,11 @@ class Environment:
     
     #turn을 인자로 받아 계절 계산
     def season_check(self, turn):
-        if 1 <= turn < 4:
+        if 1 <= turn < 5:
             self.season = 'spring'
-        elif 4 <= turn < 7:
+        elif 5 <= turn < 8:
             self.season = 'summer'
-        elif 7 <= turn < 10:
+        elif 8 <= turn < 12:
             self.season = 'autumn'
         else:
             self.season = 'winter'
@@ -387,44 +387,44 @@ def game(player1, player2):
             # gameDisplay.blit(player11.hp_img[i], (50* (i+1), 250))
             pos_x = 60 * (i+1)
             if i < temp_1:
-                gameDisplay.blit(img_hp[0], (pos_x, 100))
+                gameDisplay.blit(img_hp[0], (pos_x, 150))
             elif i > temp_1:
-                gameDisplay.blit(img_hp[6], (pos_x, 100))
+                gameDisplay.blit(img_hp[6], (pos_x, 150))
             elif i == temp_1:
                 if player1.hp % 20 == 0:
-                    gameDisplay.blit(img_hp[0], (pos_x, 100))
+                    gameDisplay.blit(img_hp[0], (pos_x, 150))
                 elif player1.hp % 20 >= 17:
-                    gameDisplay.blit(img_hp[1], (pos_x, 100))
+                    gameDisplay.blit(img_hp[1], (pos_x, 150))
                 elif player1.hp % 20 >= 13:
-                    gameDisplay.blit(img_hp[2], (pos_x, 100))
+                    gameDisplay.blit(img_hp[2], (pos_x, 150))
                 elif player1.hp % 20 >= 9:
-                    gameDisplay.blit(img_hp[3], (pos_x, 100))
+                    gameDisplay.blit(img_hp[3], (pos_x, 150))
                 elif player1.hp % 20 >= 5:
-                    gameDisplay.blit(img_hp[4], (pos_x, 100))
+                    gameDisplay.blit(img_hp[4], (pos_x, 150))
                 else:
-                    gameDisplay.blit(img_hp[5], (pos_x, 100))
+                    gameDisplay.blit(img_hp[5], (pos_x, 150))
         
         temp_2 = (player2.hp-1)//20
         for i in range(5):
             # gameDisplay.blit(player21.hp_img[i], (50* (i+1), 250))
             pos_x = 1220 - 60*(i+1)
             if i < temp_2:
-                gameDisplay.blit(img_hp[0], (pos_x, 100))
+                gameDisplay.blit(img_hp[0], (pos_x, 150))
             elif i > temp_2:
-                gameDisplay.blit(img_hp[6], (pos_x, 100))
+                gameDisplay.blit(img_hp[6], (pos_x, 150))
             elif i == temp_2:
                 if player2.hp % 20 == 0:
-                    gameDisplay.blit(img_hp[0], (pos_x, 100))
+                    gameDisplay.blit(img_hp[0], (pos_x, 150))
                 elif player2.hp % 20 >= 17:
-                    gameDisplay.blit(img_hp[1], (pos_x, 100))
+                    gameDisplay.blit(img_hp[1], (pos_x, 150))
                 elif player2.hp % 20 >= 13:
-                    gameDisplay.blit(img_hp[2], (pos_x, 100))
+                    gameDisplay.blit(img_hp[2], (pos_x, 150))
                 elif player2.hp % 20 >= 9:
-                    gameDisplay.blit(img_hp[3], (pos_x, 100))
+                    gameDisplay.blit(img_hp[3], (pos_x, 150))
                 elif player2.hp % 20 >= 5:
-                    gameDisplay.blit(img_hp[4], (pos_x, 100))
+                    gameDisplay.blit(img_hp[4], (pos_x, 150))
                 else:
-                    gameDisplay.blit(img_hp[5], (pos_x, 100))
+                    gameDisplay.blit(img_hp[5], (pos_x, 150))
         # 전역 변수의 win이 있다면 while문 종료
         if win:
             break
@@ -511,43 +511,43 @@ def shot(player):
         for i in range(5):
             pos_x = 60 * (i+1)
             if i < temp_1:
-                gameDisplay.blit(img_hp[0], (pos_x, 100))
+                gameDisplay.blit(img_hp[0], (pos_x, 150))
             elif i > temp_1:
-                gameDisplay.blit(img_hp[6], (pos_x, 100))
+                gameDisplay.blit(img_hp[6], (pos_x, 150))
             elif i == temp_1:
                 if player1.hp % 20 == 0:
-                    gameDisplay.blit(img_hp[0], (pos_x, 100))
+                    gameDisplay.blit(img_hp[0], (pos_x, 150))
                 elif player1.hp % 20 >= 17:
-                    gameDisplay.blit(img_hp[1], (pos_x, 100))
+                    gameDisplay.blit(img_hp[1], (pos_x, 150))
                 elif player1.hp % 20 >= 13:
-                    gameDisplay.blit(img_hp[2], (pos_x, 100))
+                    gameDisplay.blit(img_hp[2], (pos_x, 150))
                 elif player1.hp % 20 >= 9:
-                    gameDisplay.blit(img_hp[3], (pos_x, 100))
+                    gameDisplay.blit(img_hp[3], (pos_x, 150))
                 elif player1.hp % 20 >= 5:
-                    gameDisplay.blit(img_hp[4], (pos_x, 100))
+                    gameDisplay.blit(img_hp[4], (pos_x, 150))
                 else:
-                    gameDisplay.blit(img_hp[5], (pos_x, 100))
+                    gameDisplay.blit(img_hp[5], (pos_x, 150))
         
         temp_2 = (player2.hp-1)//20
         for i in range(5):
             pos_x = 1220 - 60*(i+1)
             if i < temp_2:
-                gameDisplay.blit(img_hp[0], (pos_x, 100))
+                gameDisplay.blit(img_hp[0], (pos_x, 150))
             elif i > temp_2:
-                gameDisplay.blit(img_hp[6], (pos_x, 100))
+                gameDisplay.blit(img_hp[6], (pos_x, 150))
             elif i == temp_2:
                 if player2.hp % 20 == 0:
-                    gameDisplay.blit(img_hp[0], (pos_x, 100))
+                    gameDisplay.blit(img_hp[0], (pos_x, 150))
                 elif player2.hp % 20 >= 17:
-                    gameDisplay.blit(img_hp[1], (pos_x, 100))
+                    gameDisplay.blit(img_hp[1], (pos_x, 150))
                 elif player2.hp % 20 >= 13:
-                    gameDisplay.blit(img_hp[2], (pos_x, 100))
+                    gameDisplay.blit(img_hp[2], (pos_x, 150))
                 elif player2.hp % 20 >= 9:
-                    gameDisplay.blit(img_hp[3], (pos_x, 100))
+                    gameDisplay.blit(img_hp[3], (pos_x, 150))
                 elif player2.hp % 20 >= 5:
-                    gameDisplay.blit(img_hp[4], (pos_x, 100))
+                    gameDisplay.blit(img_hp[4], (pos_x, 150))
                 else:
-                    gameDisplay.blit(img_hp[5], (pos_x, 100))
+                    gameDisplay.blit(img_hp[5], (pos_x, 150))
         pygame.display.update()
         idx += 1
         clock.tick(200)
