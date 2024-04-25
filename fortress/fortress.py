@@ -15,7 +15,7 @@ class Player:
         self.initial_position = initial_position[:]
         self.position = initial_position
         self.name = 'player' + str(side)
-        self.damage = 100
+        self.damage = 10
         self.volume = 100  #74
         self.side = side
         self.hp = 100
