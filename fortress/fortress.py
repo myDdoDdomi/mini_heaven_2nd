@@ -12,15 +12,15 @@ pygame.init() # pygame 모듈 초기화
 class Player:
     
     def __init__(self, initial_position, side):
+        self.initial_position = initial_position[:]
         self.position = initial_position
         self.name = 'player' + str(side)
         self.damage = 100
-        self.volume = 70  #74
+        self.volume = 100  #74
         self.side = side
         self.hp = 100
         self.gauge = 0
         self.body = [initial_position[0]+24, initial_position[1]+24]
-        self.moved = 0
         if side == 1:
             self.angle = 0
         elif side == 2:
@@ -32,7 +32,6 @@ class Player:
         self.position[1] += dy
         self.body[0] += dx
         self.body[1] += dy
-        self.moved += abs(dx)
         
     def hit(self, damage, scale):
         self.hp = round(self.hp - (damage * scale))
@@ -52,8 +51,6 @@ class Player:
     def charge(self, power):
         self.gauge += power
     
-    def moved_init(self):
-        self.moved = 0
 
 # 환경 클래스
 class Environment:
@@ -333,11 +330,21 @@ def game(player1, player2):
             elif player.side == 2 and player.angle < 180:
                 player.angle_move(-1)
         if keys[pygame.K_RIGHT]:
-            if player.moved < 50:
-                player.move(5, 0)
+            print(f'initial : {player.initial_position[0]}')
+            print(f'position : {player.position[0]}')
+            if player.side == 1:
+                if player.initial_position[0]-50 < player.position[0]+5 < player.initial_position[0] +300:
+                    player.move(5, 0)
+            elif player.side == 2:
+                if player.initial_position[0]-300 < player.position[0]+5 < player.initial_position[0]+50:
+                    player.move(5, 0)
         elif keys[pygame.K_LEFT] :
-            if player.moved < 50:
-                player.move(-5, 0)
+            if player.side == 1:
+                if player.initial_position[0]-50 < player.position[0]-5 < player.initial_position[0] +300:
+                    player.move(-5, 0)
+            elif player.side == 2:
+                if player.initial_position[0]-300 < player.position[0]-5 < player.initial_position[0]+50:
+                    player.move(-5, 0)
 
         # 화면 출력
         txt = font.render(str(player.gauge),True, BLACK)
@@ -449,7 +456,7 @@ def shot(player):
     velocity_rect = txt_velocity.get_rect(center = (640, 180))
 
     # 배경이미지
-    season = seasonal(turn)
+    season = environment.season
     if season == 'spring':
         background = pygame.image.load("./img/spring_bg.png")
     elif season == 'summer':
@@ -567,7 +574,6 @@ def shot(player):
     # 턴에 따라 환경의 계절 조정
     environment.season_check(turn)
     # 플레이어가 움직였던 거리 초기화
-    player.moved_init()
     
     
 
@@ -607,7 +613,7 @@ back_click = pygame.image.load("./img/back_click.png")
 
 font = pygame.font.Font(None,60)
 font_1 = pygame.font.Font(None,100)
-korean_font = pygame.font.Font("./font/malgun.ttf", 30)
+korean_font = pygame.font.Font("./font/Sagak-sagak.ttf", 30)
 
 wind_direction = pygame.transform.scale(pygame.image.load("./img/arrow2.png"), (100, 100))
 
