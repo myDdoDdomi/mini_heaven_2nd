@@ -59,7 +59,7 @@ class server_pongdang:
         self.play_background_bt=[pygame.image.load(f"./image/play_background_bt/{i}.png") for i in range(12)]
         self.play_background_bt = [pygame.transform.scale(image, (650, 224)) for image in self.play_background_bt]
 
-        self.sand_background=[pygame.image.load(f"./image/sand_crop/{i}.png") for i in range(10)]
+        self.sand_background=[pygame.image.load(f"./image/sandcrop/{i}.png") for i in range(10)]
 
         self.moving_in=[pygame.image.load(f"./image/moving_in{i}.png") for i in range(1,4)]
         self.moving_in = [pygame.transform.scale(image, (350, 147)) for image in self.moving_in]
@@ -82,6 +82,7 @@ class server_pongdang:
         
         
     def game_on(self):
+        global tri_ready,client_num,start_time
         pygame.display.set_icon(self.new_icon)
         self.clock = pygame.time.Clock() #Clock 오브젝트 초기화
         self.gameDisplay = pygame.display.set_mode((display_width, display_height))
@@ -102,6 +103,10 @@ class server_pongdang:
         self.player_images = [
             ('image/ball7.png', (50, 50)),  # 플레이어 1 이미지
             ('image/ball8.png', (50, 50))   # 플레이어 2 이미지
+        ]
+        self.draw_player_images = [
+            load_scaled_image('image/ball7.png', (50, 50)),  # 플레이어 1 이미지
+            load_scaled_image('image/ball8.png', (50, 50))   # 플레이어 2 이미지
         ]
         
         def button(img_in, x, y, width, height, img_act, x_act, y_act, action=None):
@@ -159,16 +164,155 @@ class server_pongdang:
         pygame.mixer.music.load('music/main_bgm_1.mp3')
         pygame.mixer.music.play()
         # 게임 화면 ----------------------------------------------------------------
+        next_change_time = pygame.time.get_ticks()
         while tri_ready == 1: # 대기 화면
+
+            if pygame.time.get_ticks() >= next_change_time:
+                next_change_time += 300  # 3초 추가
+                current_background_index = (current_background_index + 1) % len(self.sand_background)
+ 
+            self.gameDisplay.blit(self.sand_background[current_background_index], (0, 0))
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     if event.type == pygame.QUIT:
                         pygame.quit()
                         sys.exit()
-        while tri_ready == 2 : #충돌화면 송
-            ... 
             
+            self.handle_mouse_events()
+            self.draw_caps()
+            if movement_started:
+                tri_ready=2
+                
+            pygame.display.update()
+            pygame.time.Clock().tick(60)
+            
+            
+        print(self.caps)
+        while tri_ready == 2 : #충돌화면 송 
+        
+            if pygame.time.get_ticks() >= next_change_time:
+                next_change_time += 300  # 3초 추가
+                current_background_index = (current_background_index + 1) % len(self.sand_background)
+ 
+            self.gameDisplay.blit(self.sand_background[current_background_index], (0, 0))
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        sys.exit()
+            self.draw_caps()
+            if time.time() - start_time >= 3:
+                self.update_positions()
+                self.remove_out_of_bounds_caps()
+                if self.all_caps_stopped():
+       
+                    self.winner = self.check_game_over()
+                    if self.winner is not None:
+                        #print(self.winner)
+                        ...
+                          # End game after displaying the winner
+                    else:
+                        self.reset_for_next_turn()  # Prepare for the next turn
+                        tri_ready=3
+                        client_num=2
                         
+            else:
+                # Draw a countdown timer on the gameDisplay
+                countdown_timer = max(0, int(2 - (time.time() - start_time)))
+                self.gameDisplay.blit(self.moving_in[countdown_timer], (display_width // 2 - 350 // 2, display_height // 2 - 147 // 2))
+            pygame.display.update()
+            pygame.time.Clock().tick(60)
+                
+    def handle_mouse_events(self):
+        global client_num
+        if client_num == 4 :
+            start_movement()
+  
+            
+    def draw_caps(self):
+        """ Draw all caps using images """
+        
+        for player_index, player_caps in enumerate(self.caps):
+            for cap in player_caps:
+                image = self.draw_player_images[cap['player']]
+                rect = image.get_rect(center=(int(cap['position'][0]), int(cap['position'][1])))
+                self.gameDisplay.blit(image, rect)
+
+    
+    def update_positions(self):
+        """ Update positions of all caps based on their velocities and handle collisions """
+        if not movement_started:
+            return  # Do not update positions if the movement has not started
+        if time.time() - start_time < 3:
+            return  # Wait for 3 seconds before moving the caps
+        for player_caps in self.caps:
+            for cap in player_caps:
+                cap['position'][0] += cap['velocity'][0]
+                cap['position'][1] += cap['velocity'][1]
+                cap['velocity'] = [0.98 * v for v in cap['velocity']]  # Apply friction
+        self.handle_collisions()
+
+    def handle_collisions(self):
+        """ Handle collisions between caps """
+        all_caps = [cap for sublist in self.caps for cap in sublist]
+        for i, cap1 in enumerate(all_caps):
+            for cap2 in all_caps[i+1:]:
+                dx, dy = cap1['position'][0] - cap2['position'][0], cap1['position'][1] - cap2['position'][1]
+                distance = math.hypot(dx, dy)
+                if distance < 2 * CAP_RADIUS:
+                    nx, ny = dx / distance, dy / distance
+                    v1n = nx * cap1['velocity'][0] + ny * cap1['velocity'][1]
+                    v2n = nx * cap2['velocity'][0] + ny * cap2['velocity'][1]
+                    cap1['velocity'][0] += v2n * nx - v1n * nx
+                    cap1['velocity'][1] += v2n * ny - v1n * ny
+                    cap2['velocity'][0] += v1n * nx - v2n * nx
+                    cap2['velocity'][1] += v1n * ny - v2n * ny
+                    self.hitSound2.play()
+
+        
+    def remove_out_of_bounds_caps(self):
+        """ Remove caps that have gone out of the playing field """
+        for i in range(total_players):
+            temp=self.caps[i]
+            self.caps[i] = [cap for cap in self.caps[i] if FIELD_X <= cap['position'][0] <= FIELD_X + FIELD_WIDTH and
+                    FIELD_Y <= cap['position'][1] <= FIELD_Y + FIELD_HEIGHT]
+            if temp!=self.caps[i]:
+                self.fallSound.play()
+
+        
+    def check_game_over(self):
+        #print(self.caps)
+        """ Check if the game is over and return the result """
+        if not self.caps[0]:
+            return 1  # Player 2 wins
+        if not self.caps[1]:
+            return 0  # Player 1 wins
+        if not self.caps[0] and not self.caps[1]:
+            return -1  # Draw
+        return None  # Game is not over
+
+    def all_caps_stopped(self):
+        """ Check if all caps have stopped moving """
+        for player_caps in self.caps:
+            for cap in player_caps:
+                if math.hypot(*cap['velocity']) > 0.01:  # If any cap is still moving (above a small threshold)
+                    return False
+        return True
+
+    def reset_for_next_turn(self):
+        """ Reset variables for the next turn """
+        global caps_set, movement_started, start_time
+        caps_set = [0, 0]
+        movement_started = False
+        start_time = None
+        for player_caps in self.caps:
+            for cap in player_caps:
+                cap['active'] = False  # No cap is currently being dragged
+                cap['velocity'] = [0, 0]  # Reset the velocity of all caps
+
+
+
+                    
     def game_start(self):
         ready_bg = Thread(target= self.game_on)
         ready_bg.start()
@@ -206,10 +350,11 @@ def load_scaled_image(filepath, new_size):
     image = pygame.image.load(filepath).convert_alpha()  # 이미지를 불러옵니다.
     return pygame.transform.scale(image, new_size)  # 이미지의 크기를 조정합니다.
 
-
-
-
-
+def start_movement():
+    """ Begin the movement after both players have set their caps """
+    global movement_started, start_time
+    movement_started = True
+    start_time = time.time()
 
 
   
@@ -219,7 +364,7 @@ def start():
     tri_ready = 1
 
 def handle_client(client_socket, a):
-    global client_sockets, tri_ready, client_num,current_player
+    global client_sockets, tri_ready, client_num, current_player 
     # 게임 준비 --------------------------------------------------------
     while tri_ready == 0 :
         ...
@@ -231,25 +376,33 @@ def handle_client(client_socket, a):
     if not a.caps :
         a.initialize_caps()
     data_bytes = pickle.dumps(a.caps) # pickle 모듈을 활용한 데이터 직렬화
-    print(a.caps)
+
     # 딕셔너리 형태도 똑같이 진행
     client_socket.send(data_bytes) # 리스트 형태로 보내줌
     client_socket.sendall(str(client_num).encode())
     client_num += 1
     # 게임 시작 ----------------------------------------------------
-    while tri_ready == 1 :
+    
+    if tri_ready == 1 :
         player_info = client_socket.recv(4096) #각 클라이언트한테 정보 받기
         player_list= pickle.loads(player_info)
         if player_list[0]['player']==1:
             a.caps[1] = player_list
         else:
             a.caps[0] = player_list
-        tri_ready = 2
-        
-        print(a.caps)
+    client_num += 1    
+    
+    if tri_ready == 3:
         data_bytes = pickle.dumps(a.caps)
         client_socket.send(data_bytes)
         tri_ready = 1
+    
+
+        
+
+    data_bytes = pickle.dumps(a.caps)
+    client_socket.send(data_bytes)
+    tri_ready = 1
 
 
 def main():

@@ -144,12 +144,12 @@ def handle_mouse_events(event,me):
             # Move to the next player if current player is done setting caps
             # current_player = (current_player + 1) % total_players
             pickle_dic = pickle.dumps(caps[me]) # 직렬화 
-            client_socket.send(pickle_dic) 
+            client_socket.send(pickle_dic)  # 이것도 클라이언트 관리에서 트리거로 하면 될 거 같아요 
             print('다른 플레이어가 다 옮기기를 기다리기')
-            received_data = client_socket.recv(4096) # 리스트 형태인 초기 setting 값 받기
-            # 딕셔너리 형태도 똑같이 진행
-            caps = pickle.loads(received_data)
-            start_movement()
+            # received_data = client_socket.recv(4096) # 리스트 형태인 초기 setting 값 받기
+            # # 딕셔너리 형태도 똑같이 진행
+            # caps = pickle.loads(received_data)
+            # start_movement()
         # If all players have set their caps, begin the movement
         # if all(caps_set[p] >= len([cap for cap in caps[p] if FIELD_X < cap['position'][0] < FIELD_X + FIELD_WIDTH and FIELD_Y < cap['position'][1] < FIELD_Y + FIELD_HEIGHT]) for p in range(total_players)):
         #     print(caps)
@@ -271,26 +271,27 @@ def game(me):
                 running = False
             elif not movement_started and winner is None:
                 handle_mouse_events(event,me)
-
-        if movement_started:
-            if time.time() - start_time >= 3:
-                update_positions()
-                draw_caps()
-                remove_out_of_bounds_caps()
-                if all_caps_stopped():
-                    winner = check_game_over()
-                    if winner is not None:
-                        client_socket.send(winner) # 리스트 형태로 보내줌
-                        client_socket.sendall(str(winner).encode())
-                    else:
-                        reset_for_next_turn()  # Prepare for the next turn
-            else:
-                draw_caps()
-                # Draw a countdown timer on the gameDisplay
-                countdown_timer = max(0, int(2 - (time.time() - start_time)))
-                gameDisplay.blit(moving_in[countdown_timer], (display_width // 2 - 350 // 2, display_height // 2 - 147 // 2))
-        else:
-            draw_caps()  # Draw caps only when not in movement
+        draw_caps()
+        
+        # if movement_started:
+        #     if time.time() - start_time >= 3:
+        #         update_positions()
+        #         draw_caps()
+        #         remove_out_of_bounds_caps()
+        #         if all_caps_stopped():
+        #             winner = check_game_over()
+        #             if winner is not None:
+        #                 client_socket.send(winner) # 리스트 형태로 보내줌
+        #                 client_socket.sendall(str(winner).encode())
+        #             else:
+        #                 reset_for_next_turn()  # Prepare for the next turn
+        #     else:
+        #         draw_caps()
+        #         # Draw a countdown timer on the gameDisplay
+        #         countdown_timer = max(0, int(2 - (time.time() - start_time)))
+        #         gameDisplay.blit(moving_in[countdown_timer], (display_width // 2 - 350 // 2, display_height // 2 - 147 // 2))
+        # else:
+        #     draw_caps()  # Draw caps only when not in movement
 
         # Draw the line while dragging
         if dragging_start_pos:
