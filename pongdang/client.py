@@ -48,7 +48,7 @@ play_background_top = [pygame.transform.scale(image, (650, 224)) for image in pl
 play_background_bt=[pygame.image.load(f"./image/play_background_bt/{i}.png") for i in range(12)]
 play_background_bt = [pygame.transform.scale(image, (650, 224)) for image in play_background_bt]
 
-sand_background=[pygame.image.load(f"./image/sand_crop/{i}.png") for i in range(10)]
+sand_background=[pygame.image.load(f"./image/sandcrop/{i}.png") for i in range(10)]
 
 moving_in=[pygame.image.load(f"./image/moving_in{i}.png") for i in range(1,4)]
 moving_in = [pygame.transform.scale(image, (350, 147)) for image in moving_in]
@@ -109,6 +109,131 @@ caps = []
 movement_started = False
 start_time = None
 
+
+
+
+def start_movement():
+    """ Begin the movement after both players have set their caps """
+    global movement_started, start_time
+    movement_started = True
+    start_time = time.time()
+
+def handle_mouse_events(event,me):
+    """ Handle mouse events to set directions for the caps """
+    global caps_set, movement_started, start_time, dragging_start_pos
+
+    if event.type == pygame.MOUSEBUTTONDOWN and not movement_started:
+        for cap in caps[me]:
+            if not cap['active'] and math.hypot(event.pos[0] - cap['position'][0], event.pos[1] - cap['position'][1]) < CAP_RADIUS:
+                cap['active'] = True
+                dragging_start_pos = cap['position']  # Set the dragging start position
+                return
+    elif event.type == pygame.MOUSEBUTTONUP and any(cap['active'] for cap in caps[me]):
+        for cap in caps[me]:
+            if cap['active']:
+                drag_vector = [event.pos[0] - dragging_start_pos[0], event.pos[1] - dragging_start_pos[1]]
+                distance = math.hypot(*drag_vector)
+                power = min(distance / 10, 15)  # Cap the power to prevent excessively high values
+                cap['velocity'] = [-power * dim / distance for dim in drag_vector]
+                cap['active'] = False
+                caps_set[me] += 1
+                dragging_start_pos = None  # Reset dragging position
+
+        # Check if the current player has set directions for all their caps
+        if caps_set[me] >= len([cap for cap in caps[me] if FIELD_X < cap['position'][0] < FIELD_X + FIELD_WIDTH and FIELD_Y < cap['position'][1] < FIELD_Y + FIELD_HEIGHT]):
+            # Move to the next player if current player is done setting caps
+            # current_player = (current_player + 1) % total_players
+            pickle_dic = pickle.dumps(caps[me]) # 직렬화 
+            client_socket.send(pickle_dic) 
+            print('다른 플레이어가 다 옮기기를 기다리기')
+            received_data = client_socket.recv(4096) # 리스트 형태인 초기 setting 값 받기
+            # 딕셔너리 형태도 똑같이 진행
+            caps = pickle.loads(received_data)
+            start_movement()
+        # If all players have set their caps, begin the movement
+        # if all(caps_set[p] >= len([cap for cap in caps[p] if FIELD_X < cap['position'][0] < FIELD_X + FIELD_WIDTH and FIELD_Y < cap['position'][1] < FIELD_Y + FIELD_HEIGHT]) for p in range(total_players)):
+        #     print(caps)
+
+def update_positions():
+    """ Update positions of all caps based on their velocities and handle collisions """
+    if not movement_started:
+        return  # Do not update positions if the movement has not started
+    if time.time() - start_time < 3:
+        return  # Wait for 3 seconds before moving the caps
+    for player_caps in caps:
+        for cap in player_caps:
+            cap['position'][0] += cap['velocity'][0]
+            cap['position'][1] += cap['velocity'][1]
+            cap['velocity'] = [0.98 * v for v in cap['velocity']]  # Apply friction
+    handle_collisions()
+
+def handle_collisions():
+    """ Handle collisions between caps """
+    all_caps = [cap for sublist in caps for cap in sublist]
+    for i, cap1 in enumerate(all_caps):
+        for cap2 in all_caps[i+1:]:
+            dx, dy = cap1['position'][0] - cap2['position'][0], cap1['position'][1] - cap2['position'][1]
+            distance = math.hypot(dx, dy)
+            if distance < 2 * CAP_RADIUS:
+                nx, ny = dx / distance, dy / distance
+                v1n = nx * cap1['velocity'][0] + ny * cap1['velocity'][1]
+                v2n = nx * cap2['velocity'][0] + ny * cap2['velocity'][1]
+                cap1['velocity'][0] += v2n * nx - v1n * nx
+                cap1['velocity'][1] += v2n * ny - v1n * ny
+                cap2['velocity'][0] += v1n * nx - v2n * nx
+                cap2['velocity'][1] += v1n * ny - v2n * ny
+                hitSound2.play()
+
+def draw_caps():
+    """ Draw all caps using images """
+    for player_index, player_caps in enumerate(caps):
+        for cap in player_caps:
+            image = player_images[cap['player']]
+            rect = image.get_rect(center=(int(cap['position'][0]), int(cap['position'][1])))
+            gameDisplay.blit(image, rect)
+
+def remove_out_of_bounds_caps():
+    """ Remove caps that have gone out of the playing field """
+    global caps
+    for i in range(total_players):
+        temp=caps[i]
+        caps[i] = [cap for cap in caps[i] if FIELD_X <= cap['position'][0] <= FIELD_X + FIELD_WIDTH and
+                   FIELD_Y <= cap['position'][1] <= FIELD_Y + FIELD_HEIGHT]
+        if temp!=caps[i]:
+            fallSound.play()
+
+def check_game_over():
+    """ Check if the game is over and return the result """
+    if not caps[0]:
+        return 1  # Player 2 wins
+    if not caps[1]:
+        return 0  # Player 1 wins
+    if not caps[0] and not caps[1]:
+        return -1  # Draw
+    return None  # Game is not over
+
+def all_caps_stopped():
+    """ Check if all caps have stopped moving """
+    for player_caps in caps:
+        for cap in player_caps:
+            if math.hypot(*cap['velocity']) > 0.01:  # If any cap is still moving (above a small threshold)
+                return False
+    return True
+
+def reset_for_next_turn():
+    """ Reset variables for the next turn """
+    global current_player, caps_set, movement_started, start_time
+    current_player = 0
+    caps_set = [0, 0]
+    movement_started = False
+    start_time = None
+    for player_caps in caps:
+        for cap in player_caps:
+            cap['active'] = False  # No cap is currently being dragged
+            cap['velocity'] = [0, 0]  # Reset the velocity of all caps
+
+
+
 class Button:  # 버튼
     def __init__(self, img_in, x, y, width, height, img_act, x_act, y_act, action=None):
         mouse = pygame.mouse.get_pos()  # 마우스 좌표
@@ -121,11 +246,69 @@ class Button:  # 버튼
         else:
             gameDisplay.blit(img_in, (x, y))
 
-def game():
-    ...
+def game(me):
+    global caps, next_change_time,current_background_index,current_player, movement_started, start_time, dragging_start_pos
+    pygame.mixer.music.stop()
+    
+    pygame.mixer.music.load('music/main_bgm_1.mp3')
+    pygame.mixer.music.play()
+    running = True
+    winner = None
+    dragging_start_pos = None  # Track the start position of a drag
+    running = True
+    next_change_time = pygame.time.get_ticks()
+    while running:
+        # 배경 이미지 변경
+        
+        if pygame.time.get_ticks() >= next_change_time:
+            next_change_time += 300  # 3초 추가
+            current_background_index = (current_background_index + 1) % len(sand_background)
+ 
+        gameDisplay.blit(sand_background[current_background_index], (0, 0))
+ 
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif not movement_started and winner is None:
+                handle_mouse_events(event,me)
+
+        if movement_started:
+            if time.time() - start_time >= 3:
+                update_positions()
+                draw_caps()
+                remove_out_of_bounds_caps()
+                if all_caps_stopped():
+                    winner = check_game_over()
+                    if winner is not None:
+                        client_socket.send(winner) # 리스트 형태로 보내줌
+                        client_socket.sendall(str(winner).encode())
+                    else:
+                        reset_for_next_turn()  # Prepare for the next turn
+            else:
+                draw_caps()
+                # Draw a countdown timer on the gameDisplay
+                countdown_timer = max(0, int(2 - (time.time() - start_time)))
+                gameDisplay.blit(moving_in[countdown_timer], (display_width // 2 - 350 // 2, display_height // 2 - 147 // 2))
+        else:
+            draw_caps()  # Draw caps only when not in movement
+
+        # Draw the line while dragging
+        if dragging_start_pos:
+            mouse_pos = pygame.mouse.get_pos()
+            pygame.draw.line(gameDisplay, (255, 255, 255), dragging_start_pos, mouse_pos, 5)
+
+        pygame.display.flip()
+        pygame.time.Clock().tick(60)
+                
+                
+        pygame.display.update()
+    pygame.quit()
+    sys.exit()
+
+    
 
 def main():
-    global start_cnt, client_socket
+    global start_cnt, client_socket,caps
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((HOST, PORT))
     # print(client_socket.recv(1024).decode('utf-8'))
@@ -139,8 +322,12 @@ def main():
         start_cnt = 1
         received_data = client_socket.recv(4096) # 리스트 형태인 초기 setting 값 받기
         # 딕셔너리 형태도 똑같이 진행
-        received_list = pickle.loads(received_data) # 초기 setting 값 역직렬화
-        game()
+        caps = pickle.loads(received_data) # 초기 setting 값 역직렬화
+        print(caps)
+        data = client_socket.recv(1024).decode()
+        print(data)
+        me=int(data)
+        game(me)
         
 def loading():
     global start_cnt, next_change_time,current_background_index

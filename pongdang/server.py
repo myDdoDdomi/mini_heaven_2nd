@@ -1,5 +1,5 @@
 import socket
-import random
+import random,math
 import pygame
 from _thread import *
 import sys
@@ -13,7 +13,17 @@ display_width = 650 # 가로 사이즈
 display_height = 977 # 세로 사이즈
 client_sockets = []
 tri_ready = 0
-
+FIELD_WIDTH, FIELD_HEIGHT = 630, 630
+FIELD_X, FIELD_Y = (display_width - FIELD_WIDTH) // 2, (display_height - FIELD_HEIGHT) // 2
+CAP_RADIUS = 25
+MAX_CAPS = 5  # Each player has 5 caps
+current_player = 0
+total_players = 2
+caps_set = [0, 0]  # Tracks the number of caps set by each player
+# caps = []
+movement_started = False
+start_time = None
+client_num=0
 class server_pongdang:
     def __init__(self) -> None:
         # 아이콘 이미지
@@ -68,6 +78,9 @@ class server_pongdang:
         self.winner_2=pygame.transform.scale(self.winner_2, (579, 277))
         self.winner = 0
         
+        self.caps = []
+        
+        
     def game_on(self):
         pygame.display.set_icon(self.new_icon)
         self.clock = pygame.time.Clock() #Clock 오브젝트 초기화
@@ -85,7 +98,11 @@ class server_pongdang:
         current_background_index = 0
         current_background_index_shark=0
 
-        
+        self.font = pygame.font.Font(None, 36)
+        self.player_images = [
+            ('image/ball7.png', (50, 50)),  # 플레이어 1 이미지
+            ('image/ball8.png', (50, 50))   # 플레이어 2 이미지
+        ]
         
         def button(img_in, x, y, width, height, img_act, x_act, y_act, action=None):
             mouse = pygame.mouse.get_pos()  # 마우스 좌표
@@ -105,23 +122,14 @@ class server_pongdang:
                     if event.type == pygame.QUIT:
                         pygame.quit()
                         sys.exit()
-                # elif event.type == pygame.MOUSEBUTTONDOWN:
-                    # mouse_pos = pygame.mouse.get_pos()
 
-            # 마우스 위치 확인
-            # mouse_pos = pygame.mouse.get_pos()
-            # mouse_x, mouse_y = mouse_pos
-            # if pygame.time.get_ticks() >= next_change_time:
             current_background_index = (current_background_index + 1) % len(self.background_play)
             current_background_index_shark = (current_background_index_shark + 1) % len(self.sharkfin_play)
-                # next_change_time += 80  # 3초 추가
+
             time.sleep(0.15)
             self.gameDisplay.blit(self.background_play[current_background_index], (0, 0))
             self.gameDisplay.blit(self.sharkfin_play[current_background_index_shark], (75, 200))
-            # gameDisplay.blit(background_start, (0, 0))
-            # self.gameDisplay.blit(self.title_start,(36,240))
-            # button(self.btn_start, button_x, button_y, 350, 147, self.btn_start_click, button_x, button_y, main)
-            # 버튼 누를 시 tri_ready=1로 만들어서 게임 시작
+
             pygame.display.update()
         
         pygame.mixer.music.stop()
@@ -134,21 +142,16 @@ class server_pongdang:
                     if event.type == pygame.QUIT:
                         pygame.quit()
                         sys.exit()
-                # elif event.type == pygame.MOUSEBUTTONDOWN:
-                    # mouse_pos = pygame.mouse.get_pos()
 
-            # 마우스 위치 확인
-            # mouse_pos = pygame.mouse.get_pos()
-            # mouse_x, mouse_y = mouse_pos
             current_background_index=0
-            # if pygame.time.get_ticks() >= next_change_time:
+
             current_background_index = (current_background_index + 1) % len(self.background_start)
-                # next_change_time += 80  # 3초 추가
+
             time.sleep(0.1)
             self.gameDisplay.blit(self.background_start[current_background_index], (0, 0))
             
             self.gameDisplay.blit(self.title_start,(36,240))
-            button(self.btn_start, button_x, button_y, 350, 147, self.btn_start_click, button_x, button_y, main)
+            button(self.btn_start, button_x, button_y, 350, 147, self.btn_start_click, button_x, button_y, start)
             # 버튼 누를 시 tri_ready=1로 만들어서 게임 시작
             pygame.display.update()
         
@@ -156,48 +159,105 @@ class server_pongdang:
         pygame.mixer.music.load('music/main_bgm_1.mp3')
         pygame.mixer.music.play()
         # 게임 화면 ----------------------------------------------------------------
-        while tri_ready == 1:
+        while tri_ready == 1: # 대기 화면
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     if event.type == pygame.QUIT:
                         pygame.quit()
                         sys.exit()
+        while tri_ready == 2 : #충돌화면 송
+            ... 
+            
                         
     def game_start(self):
         ready_bg = Thread(target= self.game_on)
         ready_bg.start()
         
+    def initialize_caps(self):
+        """ Initialize cap positions in a grid pattern ensuring no overlap and then shuffle """
+        caps = self.caps
+        grid_size = CAP_RADIUS * 2 + 5  # Grid size ensuring no overlap, add a little extra space
+        cols = (FIELD_WIDTH // grid_size)
+        rows = (FIELD_HEIGHT // grid_size)
+        
+        # Create a list of positions based on the grid
+        positions = [(FIELD_X + (i % cols) * grid_size + CAP_RADIUS, FIELD_Y + (i // cols) * grid_size + CAP_RADIUS)
+                    for i in range(cols * rows)]
+        random.shuffle(positions)  # Shuffle the positions to get a random order
+
+        for i in range(total_players):
+            player_caps = []
+            for _ in range(MAX_CAPS):
+                if positions:
+                    new_pos = positions.pop()
+                    player_caps.append({'position': list(new_pos), 'velocity': [0, 0], 'color': self.player_images[i], 'player': i, 'active': False})
+            caps.append(player_caps)
+
+        # In the unlikely event that there's still overlap, run another check and reposition caps
+        for i, cap1 in enumerate(caps[0] + caps[1]):
+            for cap2 in (caps[0] + caps[1])[i+1:]:
+                while math.hypot(cap1['position'][0] - cap2['position'][0], cap1['position'][1] - cap2['position'][1]) < 2 * CAP_RADIUS:
+                    cap2['position'][0] = random.randint(FIELD_X + CAP_RADIUS, FIELD_X + FIELD_WIDTH - CAP_RADIUS)
+                    cap2['position'][1] = random.randint(FIELD_Y + CAP_RADIUS, FIELD_Y + FIELD_HEIGHT - CAP_RADIUS)
+
+#메인 게임 필요 변수, 함수
+def load_scaled_image(filepath, new_size):
+    """ 이미지를 불러와서 지정된 크기로 조정합니다. """
+    image = pygame.image.load(filepath).convert_alpha()  # 이미지를 불러옵니다.
+    return pygame.transform.scale(image, new_size)  # 이미지의 크기를 조정합니다.
+
+
+
+
+
+
+
+  
 # 버튼 누를 시 tri_ready=1로 만들어서 게임 시작
 def start():
     global tri_ready
     tri_ready = 1
 
-def handle_client(client_socket, _):
-    global client_sockets, tri_ready
+def handle_client(client_socket, a):
+    global client_sockets, tri_ready, client_num,current_player
     # 게임 준비 --------------------------------------------------------
     while tri_ready == 0 :
-        if tri_ready == 1 : # 모든 클라이언트들한테 시작 신호전달
-            for client in client_sockets:
-                client.send("시작".encode('utf-8'))
+        ...
+        
+    
+    client_socket.send("시작".encode('utf-8'))
     
     # 시작하기 전에 공의 랜덤 위치와 플레이어 지정 신호를 클라이언트한테 전달 해야됨---------------
-    # info_settings = [공의위치, 플레이어 지정 및 등등]
-    # data_bytes = pickle.dumps(info_settings) # pickle 모듈을 활용한 데이터 직렬화
+    if not a.caps :
+        a.initialize_caps()
+    data_bytes = pickle.dumps(a.caps) # pickle 모듈을 활용한 데이터 직렬화
+    print(a.caps)
     # 딕셔너리 형태도 똑같이 진행
-    # for client in client_sockets:
-    #   client_socket.send(data_bytes) # 리스트 형태로 보내줌
-    
+    client_socket.send(data_bytes) # 리스트 형태로 보내줌
+    client_socket.sendall(str(client_num).encode())
+    client_num += 1
     # 게임 시작 ----------------------------------------------------
     while tri_ready == 1 :
-        player_info = client_socket.recv(1024).decode('utf-8') #각 클라이언트한테 정보 받기
+        player_info = client_socket.recv(4096) #각 클라이언트한테 정보 받기
+        player_list= pickle.loads(player_info)
+        if player_list[0]['player']==1:
+            a.caps[1] = player_list
+        else:
+            a.caps[0] = player_list
+        tri_ready = 2
+        
+        print(a.caps)
+        data_bytes = pickle.dumps(a.caps)
+        client_socket.send(data_bytes)
+        tri_ready = 1
 
 
 def main():
+    global a
     pygame.init()
     # 아이콘 이미지
     a = server_pongdang() # 이거는 화면송출 클래스
     a.game_start() # Thread 이용해서 클라이언트 관리와 화면 송출을 따로 관리함
-
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket: #소켓 연결
         server_socket.bind((HOST, PORT))
         server_socket.listen()
@@ -207,7 +267,7 @@ def main():
             client_sockets.append(client_socket)
             print("Client connected")
             print("참가자 수 : ", len(client_sockets))
-            start_new_thread(handle_client, (client_socket, _))
+            start_new_thread(handle_client, (client_socket, a))
 
     
 
