@@ -6,7 +6,7 @@ import sys
 import time
 from threading import Thread
 import pickle
-
+server_run = True
 HOST = '127.0.0.1'  # 호스트
 PORT = 1111        # 포트
 display_width = 650 # 가로 사이즈
@@ -82,7 +82,7 @@ class server_pongdang:
         
         
     def game_on(self):
-        global tri_ready,client_num,start_time
+        global tri_ready,start_time, server_run
         pygame.display.set_icon(self.new_icon)
         self.clock = pygame.time.Clock() #Clock 오브젝트 초기화
         self.gameDisplay = pygame.display.set_mode((display_width, display_height))
@@ -165,63 +165,63 @@ class server_pongdang:
         pygame.mixer.music.play()
         # 게임 화면 ----------------------------------------------------------------
         next_change_time = pygame.time.get_ticks()
-        while tri_ready == 1: # 대기 화면
+        while server_run :
+            while tri_ready == 1: # 대기 화면
 
-            if pygame.time.get_ticks() >= next_change_time:
-                next_change_time += 300  # 3초 추가
-                current_background_index = (current_background_index + 1) % len(self.sand_background)
- 
-            self.gameDisplay.blit(self.sand_background[current_background_index], (0, 0))
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+                if pygame.time.get_ticks() >= next_change_time:
+                    next_change_time += 300  # 3초 추가
+                    current_background_index = (current_background_index + 1) % len(self.sand_background)
+    
+                self.gameDisplay.blit(self.sand_background[current_background_index], (0, 0))
+                for event in pygame.event.get():
                     if event.type == pygame.QUIT:
-                        pygame.quit()
-                        sys.exit()
-            
-            self.handle_mouse_events()
-            self.draw_caps()
-            if movement_started:
-                tri_ready=2
+                        if event.type == pygame.QUIT:
+                            pygame.quit()
+                            sys.exit()
                 
-            pygame.display.update()
-            pygame.time.Clock().tick(60)
+                self.handle_mouse_events()
+                self.draw_caps()
+                if movement_started:
+                    tri_ready=2
+                    
+                pygame.display.update()
+                pygame.time.Clock().tick(60)
+                
+                
+            print(self.caps)
+            while tri_ready == 2 : #충돌화면 송 
             
-            
-        print(self.caps)
-        while tri_ready == 2 : #충돌화면 송 
-        
-            if pygame.time.get_ticks() >= next_change_time:
-                next_change_time += 300  # 3초 추가
-                current_background_index = (current_background_index + 1) % len(self.sand_background)
- 
-            self.gameDisplay.blit(self.sand_background[current_background_index], (0, 0))
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+                if pygame.time.get_ticks() >= next_change_time:
+                    next_change_time += 300  # 3초 추가
+                    current_background_index = (current_background_index + 1) % len(self.sand_background)
+    
+                self.gameDisplay.blit(self.sand_background[current_background_index], (0, 0))
+                for event in pygame.event.get():
                     if event.type == pygame.QUIT:
-                        pygame.quit()
-                        sys.exit()
-            self.draw_caps()
-            if time.time() - start_time >= 3:
-                self.update_positions()
-                self.remove_out_of_bounds_caps()
-                if self.all_caps_stopped():
-       
-                    self.winner = self.check_game_over()
-                    if self.winner is not None:
-                        #print(self.winner)
-                        ...
-                          # End game after displaying the winner
-                    else:
-                        self.reset_for_next_turn()  # Prepare for the next turn
-                        tri_ready=3
-                        client_num=2
-                        
-            else:
-                # Draw a countdown timer on the gameDisplay
-                countdown_timer = max(0, int(2 - (time.time() - start_time)))
-                self.gameDisplay.blit(self.moving_in[countdown_timer], (display_width // 2 - 350 // 2, display_height // 2 - 147 // 2))
-            pygame.display.update()
-            pygame.time.Clock().tick(60)
+                        if event.type == pygame.QUIT:
+                            pygame.quit()
+                            sys.exit()
+                self.draw_caps()
+                if time.time() - start_time >= 3:
+                    self.update_positions()
+                    self.remove_out_of_bounds_caps()
+                    if self.all_caps_stopped():
+        
+                        self.winner = self.check_game_over()
+                        if self.winner is not None:
+                            #print(self.winner)
+                            ...
+                            # End game after displaying the winner
+                        else:
+                            self.reset_for_next_turn()  # Prepare for the next turn
+                            tri_ready=1
+                            
+                else:
+                    # Draw a countdown timer on the gameDisplay
+                    countdown_timer = max(0, int(2 - (time.time() - start_time)))
+                    self.gameDisplay.blit(self.moving_in[countdown_timer], (display_width // 2 - 350 // 2, display_height // 2 - 147 // 2))
+                pygame.display.update()
+                pygame.time.Clock().tick(60)
                 
     def handle_mouse_events(self):
         global client_num
@@ -364,7 +364,7 @@ def start():
     tri_ready = 1
 
 def handle_client(client_socket, a):
-    global client_sockets, tri_ready, client_num, current_player 
+    global client_sockets, tri_ready, client_num, current_player, server_run
     # 게임 준비 --------------------------------------------------------
     while tri_ready == 0 :
         ...
@@ -379,30 +379,38 @@ def handle_client(client_socket, a):
 
     # 딕셔너리 형태도 똑같이 진행
     client_socket.send(data_bytes) # 리스트 형태로 보내줌
+    
     client_socket.sendall(str(client_num).encode())
     client_num += 1
+
     # 게임 시작 ----------------------------------------------------
-    
-    if tri_ready == 1 :
-        player_info = client_socket.recv(4096) #각 클라이언트한테 정보 받기
-        player_list= pickle.loads(player_info)
-        if player_list[0]['player']==1:
-            a.caps[1] = player_list
-        else:
-            a.caps[0] = player_list
-    client_num += 1    
-    
-    if tri_ready == 3:
+    while server_run :
+        if client_num == 1 :
+            continue
+        if client_num == 2 : 
+            print(1)
+            player_info = client_socket.recv(4096) #각 클라이언트한테 정보 받기
+            player_list = pickle.loads(player_info)
+            if player_list[0]['player'] == 1 :
+                a.caps[1] = player_list
+                client_num += 1 
+            else :
+                a.caps[0] = player_list
+                client_num += 1   
+        
+        while tri_ready == 1 :
+            ...
+        
+        while tri_ready == 2:
+            ...
         data_bytes = pickle.dumps(a.caps)
         client_socket.send(data_bytes)
-        tri_ready = 1
-    
-
+        client_num = 2 
+        
+        
         
 
-    data_bytes = pickle.dumps(a.caps)
-    client_socket.send(data_bytes)
-    tri_ready = 1
+            
 
 
 def main():

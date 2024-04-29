@@ -120,7 +120,7 @@ def start_movement():
 
 def handle_mouse_events(event,me):
     """ Handle mouse events to set directions for the caps """
-    global caps_set, movement_started, start_time, dragging_start_pos
+    global caps_set, movement_started, start_time, dragging_start_pos, start_cnt
 
     if event.type == pygame.MOUSEBUTTONDOWN and not movement_started:
         for cap in caps[me]:
@@ -146,6 +146,7 @@ def handle_mouse_events(event,me):
             pickle_dic = pickle.dumps(caps[me]) # 직렬화 
             client_socket.send(pickle_dic)  # 이것도 클라이언트 관리에서 트리거로 하면 될 거 같아요 
             print('다른 플레이어가 다 옮기기를 기다리기')
+            start_cnt = 2
             # received_data = client_socket.recv(4096) # 리스트 형태인 초기 setting 값 받기
             # # 딕셔너리 형태도 똑같이 진행
             # caps = pickle.loads(received_data)
@@ -247,17 +248,17 @@ class Button:  # 버튼
             gameDisplay.blit(img_in, (x, y))
 
 def game(me):
-    global caps, next_change_time,current_background_index,current_player, movement_started, start_time, dragging_start_pos
+    global caps, next_change_time,current_player, movement_started, start_time, start_cnt, dragging_start_pos
     pygame.mixer.music.stop()
     
     pygame.mixer.music.load('music/main_bgm_1.mp3')
     pygame.mixer.music.play()
-    running = True
+    current_background_index = 0
     winner = None
     dragging_start_pos = None  # Track the start position of a drag
     running = True
     next_change_time = pygame.time.get_ticks()
-    while running:
+    while start_cnt == 1:
         # 배경 이미지 변경
         
         if pygame.time.get_ticks() >= next_change_time:
@@ -268,7 +269,8 @@ def game(me):
  
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
+                pygame.quit()
+                sys.exit()
             elif not movement_started and winner is None:
                 handle_mouse_events(event,me)
         draw_caps()
@@ -303,17 +305,16 @@ def game(me):
                 
                 
         pygame.display.update()
-    pygame.quit()
-    sys.exit()
 
     
 
 def main():
-    global start_cnt, client_socket,caps
+    global start_cnt, client_socket,caps, running
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((HOST, PORT))
     # print(client_socket.recv(1024).decode('utf-8'))
     start_cnt = 0
+    running = False
     loading_1 = Thread(target = loading) #Thread 활용해서 클라이언트 정보받기랑 로딩화면 띄우기 따로 처리
     loading_1.start()
     
@@ -325,10 +326,36 @@ def main():
         # 딕셔너리 형태도 똑같이 진행
         caps = pickle.loads(received_data) # 초기 setting 값 역직렬화
         print(caps)
-        data = client_socket.recv(1024).decode()
-        print(data)
-        me=int(data)
-        game(me)
+        data_1 = client_socket.recv(1024).decode()
+        print(data_1)
+        me=int(data_1)
+        while True :
+            game(me)
+            ready_1 = Thread(target=ready)
+            ready_1.start()
+            received_data = client_socket.recv(4096)
+            caps = pickle.loads(received_data)
+            start_cnt = 1
+            
+        
+        
+        
+def ready():    
+    global caps, next_change_time, start_cnt
+    sand_background_index = 0
+    next_change_time = pygame.time.get_ticks()
+    while start_cnt == 2: # 응답 대기화면
+        if pygame.time.get_ticks() >= next_change_time:
+            next_change_time += 300  # 3초 추가
+            sand_background_index = (sand_background_index + 1) % len(sand_background)
+
+        gameDisplay.blit(sand_background[sand_background_index], (0, 0))
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+        draw_caps()
+        pygame.display.update()
         
 def loading():
     global start_cnt, next_change_time,current_background_index
@@ -355,7 +382,7 @@ def loading():
 
 
 def start_page():
-    global next_change_time,current_background_index
+    global next_change_time,current_background_index, running
     pygame.mixer.music.stop()
     pygame.mixer.music.load('music/start_bgm_1.mp3')
     pygame.mixer.music.play()
