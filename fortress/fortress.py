@@ -143,6 +143,9 @@ def explain():
 
 # 메인페이지(처음)
 def intro():
+    # 메인 bgm 적용
+    pygame.mixer.music.load('./bgm/main_bgm.mp3')
+    pygame.mixer.music.play(-1)    # -1: 반복 
     global gameDisplay, player1, player2, win, defeated, turn, environment
     # 초기화
     player1, player2, win, defeated, environment = None, None, None, None, None
@@ -237,6 +240,10 @@ def game_over(win, defeated):
     # 화면에 맞게 이미지 크기 조정
     bg_main = [pygame.transform.scale(image, (display_width, display_height)) for image in bg_main]
     
+    # 엔딩 bgm
+    pygame.mixer.music.load('./bgm/ending_bgm.mp3')
+    pygame.mixer.music.play()
+    
     # 문구 출력용
     text_1 = f'마침내 {win}의 진심이 통했다...'
     text_2 = f'{win}의 열렬한 구애에 {defeated}의 철벽은 속절없이 함락당하고 말았다.'
@@ -279,6 +286,10 @@ def game_over(win, defeated):
 def game(player1, player2):
     global turn, environment
     print(player1.position, player2.position)
+    
+    # 게임 bgm
+    pygame.mixer.music.load('./bgm/game_bgm.mp3')
+    pygame.mixer.music.play(-1)    # -1: 반복 
     
     # 시작하고 초기 환경 설정
     environment = Environment()
@@ -579,7 +590,7 @@ def shot(player):
 
 # 피격 판정 계산 함수
 def calculate(player, impact, scale):
-    global player1, player2, win, defeated
+    global player1, player2, win, defeated, bomb_sound
     # 현재 플레이어의 side에 따라 상대 지정
     if player.side == 1:
         enemy = player2
@@ -589,6 +600,9 @@ def calculate(player, impact, scale):
     # 충돌 판정
     if impact[0] - enemy.volume <= enemy.position[0] <= impact[0] + enemy.volume:
         enemy.hit(player.damage, scale)
+        # 충돌시 bgm
+        bomb_sound.play()
+        
         # 맞고 hp가 0 이하가 되면 승자와 패자 결정
         if enemy.hp <= 0:
             win = player.name
@@ -638,6 +652,7 @@ win = None
 defeated = None
 environment = None
 turn = 1
+bomb_sound= pygame.mixer.Sound('./bgm/bomb_bgm.mp3')
 
 # 새로운 아이콘 이미지 로드
 new_icon = pygame.image.load("./img/heart_icon.png")
