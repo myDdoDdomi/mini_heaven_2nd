@@ -1,3 +1,4 @@
+
 import pygame
 import time
 import random
@@ -147,6 +148,7 @@ def handle_mouse_events(event,me):
             client_socket.send(pickle_dic)  # 이것도 클라이언트 관리에서 트리거로 하면 될 거 같아요 
             print('다른 플레이어가 다 옮기기를 기다리기')
             start_cnt = 2
+            caps_set = [0,0]
             # received_data = client_socket.recv(4096) # 리스트 형태인 초기 setting 값 받기
             # # 딕셔너리 형태도 똑같이 진행
             # caps = pickle.loads(received_data)

@@ -357,7 +357,7 @@ def start_movement():
     start_time = time.time()
 
 
-  
+
 # 버튼 누를 시 tri_ready=1로 만들어서 게임 시작
 def start():
     global tri_ready
@@ -380,7 +380,7 @@ def handle_client(client_socket, a):
     # 딕셔너리 형태도 똑같이 진행
     client_socket.send(data_bytes) # 리스트 형태로 보내줌
     
-    client_socket.sendall(str(client_num).encode())
+    client_socket.sendall(str(client_sockets.index(client_socket)).encode())
     client_num += 1
 
     # 게임 시작 ----------------------------------------------------
@@ -391,12 +391,8 @@ def handle_client(client_socket, a):
             print(1)
             player_info = client_socket.recv(4096) #각 클라이언트한테 정보 받기
             player_list = pickle.loads(player_info)
-            if player_list[0]['player'] == 1 :
-                a.caps[1] = player_list
-                client_num += 1 
-            else :
-                a.caps[0] = player_list
-                client_num += 1   
+            a.caps[client_sockets.index(client_socket)] = player_list
+            client_num += 1 
         
         while tri_ready == 1 :
             ...
@@ -410,7 +406,6 @@ def handle_client(client_socket, a):
         
         
 
-            
 
 
 def main():
@@ -421,14 +416,20 @@ def main():
     a.game_start() # Thread 이용해서 클라이언트 관리와 화면 송출을 따로 관리함
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket: #소켓 연결
         server_socket.bind((HOST, PORT))
-        server_socket.listen()
+        server_socket.listen(2)
         print("Server started, listening on port", PORT)
-        while len(client_sockets) < 2 :
-            client_socket, _ = server_socket.accept()
-            client_sockets.append(client_socket)
-            print("Client connected")
-            print("참가자 수 : ", len(client_sockets))
-            start_new_thread(handle_client, (client_socket, a))
+        
+        conn1, addr1 = server_socket.accept()
+        client_sockets.append(conn1)
+        print("Client connected", addr1)
+        print("참가자 수 : ", len(client_sockets))
+        start_new_thread(handle_client, (conn1, a))
+        
+        conn2, addr2 = server_socket.accept()
+        client_sockets.append(conn2)
+        print("Client connected", addr2)
+        print("참가자 수 : ", len(client_sockets))
+        start_new_thread(handle_client, (conn2, a))
 
     
 
