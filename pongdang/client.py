@@ -277,27 +277,6 @@ def game(me):
                 handle_mouse_events(event,me)
         draw_caps()
         
-        # if movement_started:
-        #     if time.time() - start_time >= 3:
-        #         update_positions()
-        #         draw_caps()
-        #         remove_out_of_bounds_caps()
-        #         if all_caps_stopped():
-        #             winner = check_game_over()
-        #             if winner is not None:
-        #                 client_socket.send(winner) # 리스트 형태로 보내줌
-        #                 client_socket.sendall(str(winner).encode())
-        #             else:
-        #                 reset_for_next_turn()  # Prepare for the next turn
-        #     else:
-        #         draw_caps()
-        #         # Draw a countdown timer on the gameDisplay
-        #         countdown_timer = max(0, int(2 - (time.time() - start_time)))
-        #         gameDisplay.blit(moving_in[countdown_timer], (display_width // 2 - 350 // 2, display_height // 2 - 147 // 2))
-        # else:
-        #     draw_caps()  # Draw caps only when not in movement
-
-        # Draw the line while dragging
         if dragging_start_pos:
             mouse_pos = pygame.mouse.get_pos()
             pygame.draw.line(gameDisplay, (255, 255, 255), dragging_start_pos, mouse_pos, 5)
