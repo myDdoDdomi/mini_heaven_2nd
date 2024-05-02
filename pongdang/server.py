@@ -7,7 +7,7 @@ import time
 from threading import Thread
 import pickle
 server_run = True
-HOST = '127.0.0.1'  # 호스트
+HOST = '192.168.212.86'  # 호스트
 PORT = 1111        # 포트
 display_width = 650 # 가로 사이즈
 display_height = 977 # 세로 사이즈
@@ -188,7 +188,6 @@ class server_pongdang:
                 pygame.time.Clock().tick(60)
                 
                 
-            print(self.caps)
             while tri_ready == 2 : #충돌화면 송 
             
                 if pygame.time.get_ticks() >= next_change_time:
@@ -375,12 +374,14 @@ def handle_client(client_socket, a):
     # 시작하기 전에 공의 랜덤 위치와 플레이어 지정 신호를 클라이언트한테 전달 해야됨---------------
     if not a.caps :
         a.initialize_caps()
-    data_bytes = pickle.dumps(a.caps) # pickle 모듈을 활용한 데이터 직렬화
-
+        
+    temp_list = []
+    temp_list.append(a.caps)
+    temp_list.append(str(client_sockets.index(client_socket)))
+    print(temp_list)
+    data_bytes = pickle.dumps(temp_list) # pickle 모듈을 활용한 데이터 직렬화
     # 딕셔너리 형태도 똑같이 진행
     client_socket.send(data_bytes) # 리스트 형태로 보내줌
-    
-    client_socket.sendall(str(client_sockets.index(client_socket)).encode())
     client_num += 1
 
     # 게임 시작 ----------------------------------------------------

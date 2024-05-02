@@ -29,9 +29,9 @@ class Button:  # 버튼
         mouse = pygame.mouse.get_pos()  # 마우스 좌표
         click = pygame.mouse.get_pressed()  # 클릭여부
         if x + width > mouse[0] > x and y + height > mouse[1] > y:  # 마우스가 버튼안에 있을 때
-            gameDisplay.blit(img_act, (x_act, y_act))  # 버튼 이미지 변경
+            self.gameDisplay.blit(img_act, (x_act, y_act))  # 버튼 이미지 변경
             if click[0] and action is not None:  # 마우스가 버튼안에서 클릭되었을 때
                 time.sleep(0.2)
                 action()
         else:
-            gameDisplay.blit(img_in, (x, y))
+            self.gameDisplay.blit(img_in, (x, y))

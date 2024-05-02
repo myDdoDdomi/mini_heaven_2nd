@@ -267,10 +267,9 @@ def main():
     if "시작" in data: # 넘어갈 수 있게 
         received_data = client_socket.recv(4096) # 리스트 형태인 초기 setting 값 받기
         # 딕셔너리 형태도 똑같이 진행
-        a.caps = pickle.loads(received_data) # 초기 setting 값 역직렬화
-        
-        data_1 = client_socket.recv(1024).decode()
-        a.me=int(data_1)
+        temp_list = pickle.loads(received_data) # 초기 setting 값 역직렬화
+        a.me = int(temp_list.pop())
+        a.caps = temp_list.pop()
         start_cnt = 1
         while True :
             while start_cnt == 1 :
