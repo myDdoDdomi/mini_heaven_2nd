@@ -294,9 +294,7 @@ def game(player1, player2):
     # 시작하고 초기 환경 설정
     environment = Environment()
     
-    gameDisplay = pygame.display.set_mode((display_width, display_height))
-    pygame.display.set_caption("대포 움직이기")
-    clock = pygame.time.Clock()
+   
     menu = True
     while menu:
         # 현재 환경에 따라 배경 이미지 로드

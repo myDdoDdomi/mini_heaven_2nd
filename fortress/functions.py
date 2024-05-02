@@ -28,9 +28,6 @@ def coord(player, v_w, theta_w, k):
     elif player.side == 2:
         shot_sin = math.sin(a_s) * cannon_cos - cannon_sin * math.cos(a_s)
     
-    print(f'변화량 : {round(r_sq * shot_cos, 2), round(r_sq * shot_sin, 2)}')
-    print(f'삼각함수 : {round(shot_cos, 2), round(shot_sin, 2)}')
-    print(f'각도 : {theta_s}')
 
     
     
