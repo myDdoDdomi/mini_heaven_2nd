@@ -478,12 +478,12 @@ class display_fortress:
             pygame.transform.scale(pygame.image.load("./hp_img/hp_2.png"), (50, 50)),
             pygame.transform.scale(pygame.image.load("./hp_img/hp_1.png"), (50, 50)),
             pygame.transform.scale(pygame.image.load("./hp_img/hp_0.png"), (50, 50)),
-        ][::-1]
+        ]
             self.initial_position = initial_position[:]
             self.position = initial_position
             self.name = 'player' + str(side)
-            self.damage = 10
-            self.volume = 100  #74
+            self.damage = 20
+            self.volume = 150  #74
             self.side = side
             self.hp = 100
             self.gauge = 0
