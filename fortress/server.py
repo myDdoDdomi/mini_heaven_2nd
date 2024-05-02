@@ -75,7 +75,7 @@ class display_fortress:
             pygame.transform.scale(pygame.image.load("./hp_img/hp_2.png"), (50, 50)),
             pygame.transform.scale(pygame.image.load("./hp_img/hp_1.png"), (50, 50)),
             pygame.transform.scale(pygame.image.load("./hp_img/hp_0.png"), (50, 50)),
-        ][::-1]
+        ]
 
 
 
@@ -499,13 +499,14 @@ class display_fortress:
         
         #turn을 인자로 받아 계절 계산
         def season_check(self, turn):
-            if 1 <= turn < 5:
+            seasonal_turn = (turn-1) % 16
+            if 0 <= seasonal_turn < 4:
                 self.season = 'spring'
-            elif 5 <= turn < 8:
+            elif 4 <= seasonal_turn < 8:
                 self.season = 'summer'
-            elif 8 <= turn < 12:
+            elif 8 <= seasonal_turn < 12:
                 self.season = 'autumn'
-            else:
+            elif 12 <= seasonal_turn < 15:
                 self.season = 'winter'
             self.element(self.season)
             
