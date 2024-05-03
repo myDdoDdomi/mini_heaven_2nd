@@ -493,6 +493,7 @@ def shot(player):
     # 좌표에 따른 이미지 출력 부분
     # idx를 하나씩 올리며 포탄 이미지 출력
     idx = 0
+    cannon_effect_sound[random.choice(range(0,2))].play()
     while idx < len(x_coord):
         # 발사
         # 배경 -> 대포 -> 포탄 순으로 출력하면서 이전 포탄을 덮는 느낌으로 ㄱㄱ
@@ -641,7 +642,10 @@ cannon_wheel = pygame.transform.scale(pygame.image.load("./img/cannon-1.png"), (
 bomb = pygame.image.load("./img/heart_bomb.png")
 # wheel = [100,300]
 body = [124, 324]
-
+cannon_effect_sound = [
+            pygame.mixer.Sound('./bgm/cannon_fire_0.mp3'),
+            pygame.mixer.Sound('./bgm/cannon_fire_1.mp3'),
+        ]
 shell = pygame.image.load("./img/heart_bomb.png")
 
 player1 = None

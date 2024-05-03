@@ -1,0 +1,10 @@
+nekopang:
+  version: 1.0
+
+server:
+  name: Server
+  ip: 192.168.28.219
+  port: 1111
+
+client:
+  name: 최봉준
