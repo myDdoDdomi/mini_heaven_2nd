@@ -43,7 +43,7 @@
 <br>
 <br>
 <br>
----
+
 
 
 ## 👨‍👧‍👧 회의 스크립트
@@ -66,7 +66,7 @@
 
 ## 2024.04.09
 ### 1. 게임 가이드라인 제작
-<img src="./readme_img/lovebomb_guideline.jpg" width="300" height="700">
+<img src="./readme_img/lovebomb_guideline.jpg" width="350" height="750">
 
 ### 2. 게임 아이디어 재조정
 - 계절별로 배경 존재
