@@ -78,6 +78,8 @@ class server_pongdang:
         self.winner_1=pygame.transform.scale(self.winner_1, (579, 277))
         self.winner_2=pygame.image.load("image/ending_player2_win.png")
         self.winner_2=pygame.transform.scale(self.winner_2, (579, 277))
+        self.winner_0=pygame.image.load("image/draw.png")
+        self.winner_0=pygame.transform.scale(self.winner_0, (579, 277))
         self.winner = 0
         
         self.caps = []
@@ -132,7 +134,7 @@ class server_pongdang:
                     self.effect_ending.play()
                     self.gameDisplay.blit(self.winner_2, (35, 200))
                 else:
-                    self.gameDisplay.blit(self.btn_end, (35, 200))
+                    self.gameDisplay.blit(self.winner_0, (35, 200))
                 # gameDisplay.blit(background_start, (0, 0))
                 # gameDisplay.blit(title_start,(36,240))
                 pygame.display.update()
@@ -313,12 +315,12 @@ class server_pongdang:
     def check_game_over(self):
         #print(self.caps)
         """ Check if the game is over and return the result """
+        if not self.caps[0] and not self.caps[1]:
+            return -1  # Draw
         if not self.caps[0]:
             return 1  # Player 2 wins
         if not self.caps[1]:
             return 0  # Player 1 wins
-        if not self.caps[0] and not self.caps[1]:
-            return -1  # Draw
         return None  # Game is not over
 
     def all_caps_stopped(self):
