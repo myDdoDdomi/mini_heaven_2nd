@@ -56,6 +56,8 @@ winner_1=pygame.image.load("image/ending_player1_win.png")
 winner_1=pygame.transform.scale(winner_1, (579, 277))
 winner_2=pygame.image.load("image/ending_player2_win.png")
 winner_2=pygame.transform.scale(winner_2, (579, 277))
+winner_0=pygame.image.load("image/draw.png")
+winner_0=pygame.transform.scale(winner_0, (579, 277))
 winner=0
 
 # 디스플레이 창 크기 설정
@@ -215,12 +217,12 @@ def remove_out_of_bounds_caps():
 
 def check_game_over():
     """ Check if the game is over and return the result """
+    if not caps[0] and not caps[1]:
+        return -1  # Draw
     if not caps[0]:
         return 1  # Player 2 wins
     if not caps[1]:
         return 0  # Player 1 wins
-    if not caps[0] and not caps[1]:
-        return -1  # Draw
     return None  # Game is not over
 
 def all_caps_stopped():
@@ -355,7 +357,7 @@ def start_page():
     
 # 이벤트 루프
 def end_page(winner):
-    effect_ending.play()
+    
     running = True
     while running:
         for event in pygame.event.get():
@@ -367,9 +369,13 @@ def end_page(winner):
         #     next_change_time += 80  # 3초 추가
         gameDisplay.blit(background_end, (0, 0))
         if winner==0:
+            effect_ending.play()
             gameDisplay.blit(winner_1, (35, 200))
-        else:
+        elif winner==1:
+            effect_ending.play()
             gameDisplay.blit(winner_2, (35, 200))
+        else:
+            gameDisplay.blit(winner_0, (35, 200))
         # gameDisplay.blit(background_start, (0, 0))
         # gameDisplay.blit(title_start,(36,240))
         
