@@ -56,6 +56,8 @@ class client_pongdang:
         self.play_background_bt = [pygame.transform.scale(image, (650, 224)) for image in self.play_background_bt]
 
         self.sand_background=[pygame.image.load(f"./image/sandcrop/{i}.png") for i in range(10)]
+        self.player_ball=[pygame.image.load(f"./image/ball{i}.png") for i in range(7,9)]
+        self.player_ball = [pygame.transform.scale(image, (50, 50)) for image in self.player_ball]
 
         self.moving_in=[pygame.image.load(f"./image/moving_in{i}.png") for i in range(1,4)]
         self.moving_in = [pygame.transform.scale(image, (350, 147)) for image in self.moving_in]
@@ -203,7 +205,7 @@ class client_pongdang:
         
     def draw_caps(self):
         """ Draw all caps using images """
-        
+        self.gameDisplay.blit(self.player_ball[self.me], (10, 10))
         for player_index, player_caps in enumerate(self.caps):
             for cap in player_caps:
                 image = self.draw_player_images[cap['player']]

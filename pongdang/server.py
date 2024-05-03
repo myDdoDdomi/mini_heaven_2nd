@@ -7,7 +7,7 @@ import time
 from threading import Thread
 import pickle
 server_run = True
-HOST = '192.168.212.86'  # 호스트
+HOST = '127.0.0.1'  # 호스트
 PORT = 1111        # 포트
 display_width = 650 # 가로 사이즈
 display_height = 977 # 세로 사이즈
@@ -50,6 +50,8 @@ class server_pongdang:
         self.background_play = [pygame.image.load(f"./image/background/background_{i}.png") for i in range(4)]
         self.background_play = [pygame.transform.scale(image, (650, 977)) for image in self.background_play]
         self.sharkfin_play = [pygame.image.load(f"./image/sharkfin/{i}.png") for i in range(10)]
+        self.loading_img = [pygame.image.load(f"./image/loading_img/loading{i}.png") for i in range(1,8)]
+        self.loading_img = [pygame.transform.scale(image, (350, 350)) for image in self.loading_img]
 
         self.background_land_play = pygame.image.load("./image/land.jpg") # 플레이 배경
         self.background_land_play = pygame.transform.scale(self.background_land_play, (630, 630))
@@ -98,6 +100,7 @@ class server_pongdang:
         
         current_background_index = 0
         current_background_index_shark=0
+        current_background_index_load=0
 
         self.font = pygame.font.Font(None, 36)
         self.player_images = [
@@ -109,6 +112,31 @@ class server_pongdang:
             load_scaled_image('image/ball8.png', (50, 50))   # 플레이어 2 이미지
         ]
         
+        def end_page(winner):
+            
+            running = True
+            while running:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        sys.exit()
+
+                # if pygame.time.get_ticks() >= next_change_time:
+                #     current_background_index = (current_background_index + 1) % len(background_start)
+                #     next_change_time += 80  # 3초 추가
+                self.gameDisplay.blit(self.background_end, (0, 0))
+                if winner==0:
+                    self.effect_ending.play()
+                    self.gameDisplay.blit(self.winner_1, (35, 200))
+                elif winner==1:
+                    self.effect_ending.play()
+                    self.gameDisplay.blit(self.winner_2, (35, 200))
+                else:
+                    self.gameDisplay.blit(self.btn_end, (35, 200))
+                # gameDisplay.blit(background_start, (0, 0))
+                # gameDisplay.blit(title_start,(36,240))
+                pygame.display.update()
+            
         def button(img_in, x, y, width, height, img_act, x_act, y_act, action=None):
             mouse = pygame.mouse.get_pos()  # 마우스 좌표
             click = pygame.mouse.get_pressed()  # 클릭여부
@@ -130,10 +158,12 @@ class server_pongdang:
 
             current_background_index = (current_background_index + 1) % len(self.background_play)
             current_background_index_shark = (current_background_index_shark + 1) % len(self.sharkfin_play)
+            current_background_index_load = (current_background_index_load + 1) % len(self.loading_img)
 
             time.sleep(0.15)
             self.gameDisplay.blit(self.background_play[current_background_index], (0, 0))
             self.gameDisplay.blit(self.sharkfin_play[current_background_index_shark], (75, 200))
+            self.gameDisplay.blit(self.loading_img[current_background_index_load], (150, 650))
 
             pygame.display.update()
         
@@ -209,7 +239,7 @@ class server_pongdang:
                         self.winner = self.check_game_over()
                         if self.winner is not None:
                             #print(self.winner)
-                            ...
+                            end_page(self.winner)
                             # End game after displaying the winner
                         else:
                             self.reset_for_next_turn()  # Prepare for the next turn
@@ -220,8 +250,8 @@ class server_pongdang:
                     countdown_timer = max(0, int(2 - (time.time() - start_time)))
                     self.gameDisplay.blit(self.moving_in[countdown_timer], (display_width // 2 - 350 // 2, display_height // 2 - 147 // 2))
                 pygame.display.update()
-                pygame.time.Clock().tick(60)
-                
+                pygame.time.Clock().tick(60) 
+                       
     def handle_mouse_events(self):
         global client_num
         if client_num == 4 :
@@ -237,6 +267,7 @@ class server_pongdang:
                 rect = image.get_rect(center=(int(cap['position'][0]), int(cap['position'][1])))
                 self.gameDisplay.blit(image, rect)
 
+        
     
     def update_positions(self):
         """ Update positions of all caps based on their velocities and handle collisions """
