@@ -478,12 +478,12 @@ class display_fortress:
             pygame.transform.scale(pygame.image.load("./hp_img/hp_2.png"), (50, 50)),
             pygame.transform.scale(pygame.image.load("./hp_img/hp_1.png"), (50, 50)),
             pygame.transform.scale(pygame.image.load("./hp_img/hp_0.png"), (50, 50)),
-        ][::-1]
+        ]
             self.initial_position = initial_position[:]
             self.position = initial_position
             self.name = 'player' + str(side)
-            self.damage = 10
-            self.volume = 100  #74
+            self.damage = 20
+            self.volume = 150  #74
             self.side = side
             self.hp = 100
             self.gauge = 0
@@ -589,6 +589,16 @@ def game_over(win, defeated):
     # 엔딩 bgm
     pygame.mixer.music.load('./bgm/ending_bgm.mp3')
     pygame.mixer.music.play()
+    clock = pygame.time.Clock()
+    
+    korean_font = pygame.font.Font("./font/Sagak-sagak.ttf", 30)
+    
+    gameDisplay = pygame.display.set_mode((display_width, display_height))
+    ending_bg = pygame.image.load("./img/game_over_result.png")
+    ending_rect = ending_bg.get_rect(center = (640, 360))
+    
+    regame_button = pygame.image.load("./img/regame.png")
+    regame_button_click = pygame.image.load("./img/regame_click.png")
     
     # 문구 출력용
     text_1 = f'마침내 {win}의 진심이 통했다...'
@@ -623,7 +633,7 @@ def game_over(win, defeated):
         gameDisplay.blit(win_text_2, win_rect_2)
         gameDisplay.blit(win_text_3, win_rect_3)
         gameDisplay.blit(win_text_4, win_rect_4)
-        Button(regame_button, 500, 550, 300, 50, regame_button_click, 500, 550, intro)
+        display_fortress.Button(regame_button, 500, 550, 300, 50, regame_button_click, 500, 550, client_start)
         pygame.display.update() # 화면 업데이트
         cur_idx += 1
         clock.tick(15) #프레임 레이트 지정
@@ -676,7 +686,7 @@ def client_start():
         client.environment = temp_list.pop()
         client.turn = temp_list.pop()
         
-        while True :
+        while not client.win :
             if client.player == (2-(client.turn%2)) :
                 print(1)
                 game_trigger = 1
@@ -698,8 +708,10 @@ def client_start():
             
             client.turn = result_data[2]
             client.environment = result_data[3]
-        
-        
+
+            client.win = result_data[4]
+            client.defeated = result_data[5]
+        game_over(client.win, client.defeated)
 '''
 result_list = [
             [server.player1.position, server.player1.angle, server.player1.hp],
