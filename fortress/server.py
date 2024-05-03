@@ -8,11 +8,17 @@ from threading import Thread
 import pickle
 from _thread import *
 import socket
+import yaml
 
+yaml_file = "config.yaml"
+with open(yaml_file, 'r', encoding='utf-8') as file:
+    config = yaml.safe_load(file)
+
+HOST = config['server']['ip']  # 호스트
+PORT = config['server']['port']  # 포트
+NAME = config['client']['name'] #이름을 입력해주세요
 # 변수 영역 //////////////////////////////////////////////////
 game_trigger = 0
-HOST = '192.168.212.73'  # 호스트
-PORT = 1111        # 포트
 WHITE = (255,255,255)
 RED = (255, 10, 10)
 BLACK = (0,0,0)
@@ -33,6 +39,10 @@ class display_fortress:
         self.p2_button_click = pygame.image.load("./img/player2_click.png")
         self.back = pygame.image.load("./img/back.png")
         self.back_click = pygame.image.load("./img/back_click.png")
+        self.cannon_effect_sound = [
+            pygame.mixer.Sound('./bgm/cannon_fire_0.mp3'),
+            pygame.mixer.Sound('./bgm/cannon_fire_1.mp3'),
+        ]
 
         self.font = pygame.font.Font(None,60)
         self.font_1 = pygame.font.Font(None,100)
@@ -186,6 +196,7 @@ class display_fortress:
                 # 좌표에 따른 이미지 출력 부분
                 # idx를 하나씩 올리며 포탄 이미지 출력
                 idx = 0
+                self.cannon_effect_sound[random.choice(range(0,2))].play()
                 while idx < len(x_coord):
                     # 발사
                     
@@ -278,6 +289,10 @@ class display_fortress:
                 # 플레이어가 움직였던 거리 초기화
 
             while game_trigger == 3 : # 클라이언트 대기 부분
+                
+                if self.win:
+                    break
+                
                 if self.environment.season == 'spring':
                     background = pygame.image.load("./img/spring_bg.png")
                 elif self.environment.season == 'summer':
@@ -376,6 +391,11 @@ class display_fortress:
                 # 전역 변수의 win이 있다면 while문 종료
                 pygame.display.update()
                 self.clock.tick(20)
+            
+            if self.win :
+                self.game_over(self.win, self.defeated)
+                
+            
         
     
     def explain(self):
@@ -433,7 +453,52 @@ class display_fortress:
                 self.win = player.name
                 self.defeated = enemy.name
         
+    def game_over(self, win, defeated):
+        game_over = True
+        bg_main = [pygame.image.load(f"./ending_img/{i}.png") for i in range(147)]
+        # 화면에 맞게 이미지 크기 조정
+        bg_main = [pygame.transform.scale(image, (display_width, display_height)) for image in bg_main]
         
+        # 엔딩 bgm
+        pygame.mixer.music.load('./bgm/ending_bgm.mp3')
+        pygame.mixer.music.play()
+        
+        # 문구 출력용
+        text_1 = f'마침내 {win}의 진심이 통했다...'
+        text_2 = f'{win}의 열렬한 구애에 {defeated}의 철벽은 속절없이 함락당하고 말았다.'
+        text_3 = f'영원한 사랑의 노예가 되어버린 {defeated}...'
+        text_4 = f'하지만 걱정 마라. 사랑은 이기고 지는 게 아니니까.'
+
+        win_text_1 = self.korean_font.render(text_1, True, WHITE)
+        win_text_2 = self.korean_font.render(text_2, True, WHITE)
+        win_text_3 = self.korean_font.render(text_3, True, WHITE)
+        win_text_4 = self.korean_font.render(text_4, True, WHITE)
+        
+        win_rect_1 = win_text_1.get_rect(center = (640, 200))
+        win_rect_2 = win_text_2.get_rect(center = (640, 300))
+        win_rect_3 = win_text_3.get_rect(center = (640, 400))
+        win_rect_4 = win_text_4.get_rect(center = (640, 500))
+        
+        
+        cur_idx = 0
+        while game_over:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+            
+            display_idx = cur_idx % len(bg_main)
+            time.sleep(0.1)
+            # next_level += 500  # 3초 추가
+            self.gameDisplay.blit(bg_main[display_idx], (0, 0))
+            self.gameDisplay.blit(self.ending_bg, self.ending_rect)
+            self.gameDisplay.blit(win_text_1, win_rect_1)
+            self.gameDisplay.blit(win_text_2, win_rect_2)
+            self.gameDisplay.blit(win_text_3, win_rect_3)
+            self.gameDisplay.blit(win_text_4, win_rect_4)
+            pygame.display.update() # 화면 업데이트
+            cur_idx += 1
+            self.clock.tick(15) #프레임 레이트 지정
 
 # 플레이어 클래스
     class Player:
@@ -451,8 +516,8 @@ class display_fortress:
             self.initial_position = initial_position[:]
             self.position = initial_position
             self.name = 'player' + str(side)
-            self.damage = 100
-            self.volume = 150  #74
+            self.damage = 20
+            self.volume = 125  #74
             self.side = side
             self.hp = 100
             self.gauge = 0
@@ -499,14 +564,13 @@ class display_fortress:
         
         #turn을 인자로 받아 계절 계산
         def season_check(self, turn):
-            seasonal_turn = (turn-1) % 16
-            if 0 <= seasonal_turn < 4:
+            if 1 <= turn < 5:
                 self.season = 'spring'
-            elif 4 <= seasonal_turn < 8:
+            elif 5 <= turn < 8:
                 self.season = 'summer'
-            elif 8 <= seasonal_turn < 12:
+            elif 8 <= turn < 12:
                 self.season = 'autumn'
-            elif 12 <= seasonal_turn < 15:
+            else:
                 self.season = 'winter'
             self.element(self.season)
             
@@ -552,66 +616,7 @@ class display_fortress:
 # 함수 영역 ///////////////////////////////////////////////////
 # 설명 부분
 
-# 게임이 끝났다면
-def game_over(win, defeated):
-    game_over = True
-    bg_main = [pygame.image.load(f"./ending_img/{i}.png") for i in range(147)]
-    # 화면에 맞게 이미지 크기 조정
-    bg_main = [pygame.transform.scale(image, (display_width, display_height)) for image in bg_main]
-    
-    clock = pygame.time.Clock()
-    
-    gameDisplay = pygame.display.set_mode((display_width, display_height))
-    ending_bg = pygame.image.load("./img/game_over_result.png")
-    ending_rect = ending_bg.get_rect(center = (640, 360))
-    
-    regame_button = pygame.image.load("./img/regame.png")
-    regame_button_click = pygame.image.load("./img/regame_click.png")
-    print('브금 통과')
-    # 엔딩 bgm
-    pygame.mixer.music.load('./bgm/ending_bgm.mp3')
-    pygame.mixer.music.play()
-    
-    korean_font = pygame.font.Font("./font/Sagak-sagak.ttf", 30)
-    # 문구 출력용
-    text_1 = f'마침내 {win}의 진심이 통했다...'
-    text_2 = f'{win}의 열렬한 구애에 {defeated}의 철벽은 속절없이 함락당하고 말았다.'
-    text_3 = f'영원한 사랑의 노예가 되어버린 {defeated}...'
-    text_4 = f'하지만 걱정 마라. 사랑은 이기고 지는 게 아니니까.'
-    
-    print('중간')
-    win_text_1 = korean_font.render(text_1, True, WHITE)
-    win_text_2 = korean_font.render(text_2, True, WHITE)
-    win_text_3 = korean_font.render(text_3, True, WHITE)
-    win_text_4 = korean_font.render(text_4, True, WHITE)
-    
-    win_rect_1 = win_text_1.get_rect(center = (640, 200))
-    win_rect_2 = win_text_2.get_rect(center = (640, 300))
-    win_rect_3 = win_text_3.get_rect(center = (640, 400))
-    win_rect_4 = win_text_4.get_rect(center = (640, 500))
-    
-    print('1차 통과')
-    cur_idx = 0
-    while game_over:
-        print('//////////////////////////////////////////')
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-        
-        display_idx = cur_idx % len(bg_main)
-        time.sleep(0.1)
-        # next_level += 500  # 3초 추가
-        gameDisplay.blit(bg_main[display_idx], (0, 0))
-        gameDisplay.blit(ending_bg, ending_rect)
-        gameDisplay.blit(win_text_1, win_rect_1)
-        gameDisplay.blit(win_text_2, win_rect_2)
-        gameDisplay.blit(win_text_3, win_rect_3)
-        gameDisplay.blit(win_text_4, win_rect_4)
-        display_fortress.Button(regame_button, 500, 550, 300, 50, regame_button_click, 500, 550, server_start)
-        pygame.display.update() # 화면 업데이트
-        cur_idx += 1
-        clock.tick(15) #프레임 레이트 지정
+
 
 
     
@@ -636,7 +641,7 @@ def handle_client(client_socket, server):
     
     data_bytes = pickle.dumps(temp_setting)
     client_socket.send(data_bytes)
-    while not server.win :
+    while True :
         if client_socket == client_sockets[1-(server.turn%2)]:
             print("한번만 나오셈")
             recv_info = client_socket.recv(4096)
@@ -658,21 +663,19 @@ def handle_client(client_socket, server):
         while game_trigger == 1 :
             ...
         
+        
+        
 
         result_list = [
             [server.player1.position, server.player1.angle, server.player1.hp],
             [server.player2.position, server.player2.angle, server.player2.hp],
             server.turn,
             server.environment,
-            server.win,
-            server.defeated
             ]
         
         result_data = pickle.dumps(result_list)
         client_socket.sendall(result_data)
         
-        # test ---------------------------------------------------------------------
-    game_over(server.win, server.defeated)
     
     
     

@@ -6,9 +6,18 @@ import sys
 import time
 from threading import Thread
 import pickle
+import yaml
+
+
+yaml_file = "config.yaml"
+with open(yaml_file, 'r', encoding='utf-8') as file:
+    config = yaml.safe_load(file)
+    
+    
+HOST = config['server']['ip']  # 호스트
+PORT = config['server']['port']  # 포트
+
 server_run = True
-HOST = '127.0.0.1'  # 호스트
-PORT = 1111        # 포트
 display_width = 650 # 가로 사이즈
 display_height = 977 # 세로 사이즈
 client_sockets = []
