@@ -1,4 +1,5 @@
 import pygame
+import sys
 import time
 
 class Button:
@@ -38,43 +39,49 @@ class Button:
         else:
             screen.blit(self.img_normal, (self.rect.x, self.rect.y))
 
-
 class InputBox:
-    def __init__(self, x, y, width, height, font, placeholder=""):
-        self.rect = pygame.Rect(x, y, width, height)
-        self.font = font
+    def __init__(self, x, y, w, h, font, placeholder=""):
+        self.rect = pygame.Rect(x, y, w, h)
+        self.color_inactive = (200, 200, 200)  # 비활성화 색상
+        self.color_active = (0, 0, 0)  # 활성화 색상
+        self.color = self.color_inactive
         self.text = ""
-        self.active = False  # 입력창이 클릭되었을 때만 활성화
-        self.placeholder = placeholder  # 플레이스홀더 텍스트
-        self.color_active = (50, 50, 250)  # 활성화 시 색상 (파란색)
-        self.color_inactive = (200, 200, 200)  # 비활성화 시 색상 (회색)
+        self.font = font
+        self.active = False
+        self.placeholder = placeholder
+        self.ime_active = False  # IME (한글 입력기) 상태
 
     def handle_event(self, event):
-        """마우스 클릭 및 키 입력 처리"""
+        """ 이벤트 처리 (마우스 클릭 및 키보드 입력) """
         if event.type == pygame.MOUSEBUTTONDOWN:
-            # 클릭한 위치가 입력창이면 활성화, 아니면 비활성화
+            # 클릭하면 활성화/비활성화 토글
             if self.rect.collidepoint(event.pos):
                 self.active = True
+                pygame.key.start_text_input()  # ✅ 한글 입력 활성화
+                self.ime_active = True
             else:
                 self.active = False
+                pygame.key.stop_text_input()  # ✅ 한글 입력 비활성화
+                self.ime_active = False
+            self.color = self.color_active if self.active else self.color_inactive
 
-        if self.active and event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_RETURN:
-                self.active = False  # 엔터 입력 시 비활성화
-                return self.text  # 입력값 반환
-            elif event.key == pygame.K_BACKSPACE:
-                self.text = self.text[:-1]  # 글자 삭제
-            else:
-                self.text += event.unicode  # 문자 추가
+        elif event.type == pygame.KEYDOWN:
+            if self.active:
+                if event.key == pygame.K_RETURN:  # 엔터 키 처리
+                    print(f"입력된 값: {self.text}")  # 콘솔에 출력
+                    return self.text  # 입력한 값 반환 후
+                elif event.key == pygame.K_BACKSPACE:
+                    self.text = self.text[:-1]  # 한 글자 삭제
+                else:
+                    self.text += event.unicode  # ✅ 한글 포함 모든 문자 입력 가능
 
-        return None  # 입력값 없음
+        elif event.type == pygame.TEXTINPUT and self.ime_active:
+            """✅ 한글 입력 모드에서 TEXTINPUT 이벤트 사용"""
+            self.text += event.text
 
     def draw(self, screen):
-        """입력창을 화면에 그리기"""
-        color = self.color_active if self.active else self.color_inactive
-        pygame.draw.rect(screen, color, self.rect, 2)  # 테두리 색상
-        pygame.draw.rect(screen, (255, 255, 255), self.rect)  # 배경 색상
-
-        # 텍스트 표시 (플레이스홀더 포함)
-        text_surface = self.font.render(self.text if self.text else self.placeholder, True, (0, 0, 0))
-        screen.blit(text_surface, (self.rect.x + 5, self.rect.y + 5))
+        """ 입력 박스 렌더링 """
+        pygame.draw.rect(screen, self.color, self.rect, 2)
+        text_to_render = self.text if self.text else self.placeholder
+        txt_surface = self.font.render(text_to_render, True, (0, 0, 0))
+        screen.blit(txt_surface, (self.rect.x + 5, self.rect.y + 5))

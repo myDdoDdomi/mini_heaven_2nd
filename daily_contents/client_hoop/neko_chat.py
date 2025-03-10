@@ -1,32 +1,55 @@
 import pygame
 import asyncio
+import threading
 from components.ui_components import InputBox
 
 class ChatUI:
-    def __init__(self, x, y, width, height, font, chat_network, client_name, loop):
+    def __init__(self, x, y, width, height, font, chat_network, client_name):
         self.rect = pygame.Rect(x, y, width, height)  # 채팅창 위치 및 크기
         self.font = font
         self.chat_network = chat_network
         self.client_name = client_name  # 클라이언트 이름 저장
         self.input_box = None  # 초기에는 None (연결 후 생성)
         self.connected = False  # 웹소켓 연결 여부
-        self.loop = loop  # asyncio 이벤트 루프 저장
+        
+        # ✅ 별도의 asyncio 루프를 실행하는 스레드 생성
+        self.loop = asyncio.new_event_loop()
+        self.thread = threading.Thread(target=self.run_event_loop, daemon=True)
+        self.thread.start()
+
+    def run_event_loop(self):
+        """백그라운드에서 asyncio 이벤트 루프 실행"""
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_forever()
 
     def handle_event(self, event):
         """채팅 입력창 이벤트 처리"""
         if self.input_box and self.connected:
             result = self.input_box.handle_event(event)
             if result is not None:  # 엔터 입력 시 메시지 전송
-                if self.chat_network and result.strip():
-                    message = f"{self.client_name}: {result}"
-                    
-                    # ✅ 메시지를 비동기적으로 전송 (future.result() 제거)
-                    asyncio.run_coroutine_threadsafe(self.chat_network.send_message(message), self.loop)
-                    
-                    print(f"✅ 메시지 전송 요청됨: {message}")
+                print(f"🎯 입력된 메시지: {result}")  # ✅ 메시지가 정상적으로 감지되는지 확인
 
-                    # ✅ 메시지 전송 후 입력창 비우기
-                    self.input_box.text = ""
+                if not self.chat_network:
+                    print(f"❌ 채팅 네트워크가 None입니다. 메시지 전송 불가")
+                    return  # ✅ 채팅 네트워크가 없으면 실행 중단
+
+                if not self.chat_network.connected:
+                    print("❌ 서버와 연결되지 않음. 연결을 먼저 시도해야 합니다.")
+                    return  # ✅ 서버와 연결되지 않았다면 메시지 전송 X
+
+                # ✅ 비동기 메시지 전송
+                message = f"{result}"
+                future = asyncio.run_coroutine_threadsafe(self.chat_network.send_message(message), self.loop)
+
+                try:
+                    future.result()  # 실행 결과 확인 (예외 발생 시 확인 가능)
+                    print(f"✅ 메시지 전송 요청됨: {message}")
+                except Exception as e:
+                    print(f"❌ 메시지 전송 실패: {e}")
+
+                # ✅ 메시지 전송 후 입력창 비우기
+                self.input_box.text = ""
+
 
     def draw(self, screen):
         """채팅 UI 그리기"""
