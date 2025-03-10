@@ -1,14 +1,15 @@
 import pygame
+import asyncio
 # from neko_game import GameUI
-# from neko_chat import ChatUI
+from neko_chat import ChatUI
 # from network.game_network import GameNetworkClient
-# from network.chat_network import ChatNetworkClient
+from network.chat_network import ChatNetworkClient
 
 pygame.init()
 pygame.mixer.init()
 
 from assets.assets import IMAGES, SOUNDS
-from components.ui_components import Button
+from components.ui_components import Button, InputBox
 
 
 display_width, display_height = 1168, 768
@@ -23,22 +24,52 @@ input_active = True  # 입력창 활성화 여부
 
 # 폰트 설정
 font = pygame.font.Font(None, 36)
+
+# ✅ asyncio 이벤트 루프 생성
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
+
+# ✅ 네트워크 클라이언트 초기화 (아직 서버 연결 안 함)
+chat_network = None
+
+# 채팅 UI 생성
+chat_ui = ChatUI(game_width, 0, chat_width, chat_height, font, chat_network, client_name, loop)
+
+
 label_font = pygame.font.Font(None, 42)
 input_box = pygame.Rect(214, display_height // 2 + 150, 200, 40)  # 입력창 위치
 
-
-# 버튼 클릭 이벤트
 def start_game():
-    print("게임 시작!")
+    """버튼을 눌렀을 때 실행 (서버 연결)"""
+    global client_name, chat_network, chat_ui
+
+    # ✅ 최신 입력값 가져오기
+    client_name = name_input_box.text.strip()
+    
+    print(f"게임 시작! 채팅 서버에 '{client_name}' 이름으로 연결 중...")
+
+    if client_name:  # 이름이 입력되었는지 확인
+        chat_network = ChatNetworkClient("ws://localhost:8000", client_name)  # 채팅 네트워크 생성
+        asyncio.run(chat_network.connect())
+
+        # ✅ 채팅 UI를 업데이트해서 새로운 chat_network 사용
+        chat_ui.chat_network = chat_network
+        chat_ui.set_connected()  # 웹소켓 연결 후 입력창 활성화
+    else:
+        print("⚠️ 클라이언트 이름을 입력하세요!")  # 빈 값 방지
 
 # 버튼 생성
 start_button = Button(
     img_normal=IMAGES["start_btn"],  
-    x=214, y=display_height // 2 + 200,  
+    x=237, y=560,  
     width=150, height=50,  
     img_hover=IMAGES["start_btn_hover"],  
-    action=start_game  
+    x_act=207, y_act=545,  # 마우스가 올라갔을 때 이미지 위치 (변경하고 싶으면 수정 가능)
+    action=start_game
 )
+
+name_input_box = InputBox(214, display_height // 2 + 150, 200, 40, font, placeholder="Enter your name")
+
 
 def main_loop():
     global client_name, input_active
@@ -52,27 +83,19 @@ def main_loop():
                 pygame.quit()
                 return
 
-            # 이름 입력 처리
-            if input_active:
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_RETURN:  # 엔터 키 입력 시
-                        input_active = False
-                        print(f"입력된 이름: {client_name}")
-                    elif event.key == pygame.K_BACKSPACE:  # 백스페이스 키 입력 시
-                        client_name = client_name[:-1]
-                    else:
-                        client_name += event.unicode
+            # 입력창 이벤트 처리 (이름 입력)
+            result = name_input_box.handle_event(event)
+            if result is not None:  # 엔터 입력 시 값 설정
+                client_name = result
+                print(f"입력된 이름: {client_name}")
 
-        # UI 요소 그리기
-        if input_active:
-            label_surface = label_font.render("YOUR NAME", True, (0, 0, 0))  # 흰색 텍스트
-            screen.blit(label_surface, (input_box.x + 14, input_box.y - 30))  # 입력창 위에 표시
+            # ✅ 채팅 UI 이벤트 처리 (채팅 입력 가능하도록 추가)
+            chat_ui.handle_event(event)
 
-            pygame.draw.rect(screen, (200, 200, 200), input_box)  # 입력창 배경
-            text_surface = font.render(client_name, True, (0, 0, 0))
-            screen.blit(text_surface, (input_box.x + 10, input_box.y + 10))
-            
-        start_button.draw(screen)
+        # ✅ UI 요소 그리기
+        name_input_box.draw(screen)  # 이름 입력창
+        start_button.draw(screen)  # 시작 버튼
+        chat_ui.draw(screen)  # ✅ 채팅 UI 추가 (입력창 포함)
 
         pygame.display.update()
         clock.tick(30)
